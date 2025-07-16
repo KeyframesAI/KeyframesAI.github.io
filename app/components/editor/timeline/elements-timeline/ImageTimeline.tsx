@@ -101,7 +101,7 @@ export default function ImageTimeline() {
                                 }
                             }}
                             onClick={() => handleClick('media', clip.id)}
-                            className={`absolute border border-gray-500 border-opacity-50 rounded-md top-2 h-12 rounded bg-[#27272A] text-white text-sm flex items-center justify-center cursor-pointer ${activeElement === 'media' && mediaFiles[activeElementIndex].id === clip.id ? 'bg-[#3F3F46] border-blue-500' : ''}`}
+                            className={`absolute border border-gray-500 border-opacity-50 rounded-md top-2 h-32 rounded bg-[#27272A] text-white text-sm flex items-center justify-center cursor-pointer ${activeElement === 'media' && mediaFiles[activeElementIndex].id === clip.id ? 'bg-[#3F3F46] border-blue-500' : ''}`}
                             style={{
                                 left: `${clip.positionStart * timelineZoom}px`,
                                 width: `${(clip.positionEnd - clip.positionStart) * timelineZoom}px`,
@@ -111,12 +111,12 @@ export default function ImageTimeline() {
                             {/* <MoveableTimeline /> */}
                             <Image
                                 alt="Image"
-                                className="h-7 w-7 min-w-6 mr-2 flex-shrink-0"
+                                className="h-32 w-32 min-w-6 mr-2 flex-shrink-0"
                                 height={30}
                                 width={30}
-                                src="https://www.svgrepo.com/show/535454/image.svg"
+                                src={clip.src}//"https://www.svgrepo.com/show/535454/image.svg"
                             />
-                            <span className="truncate text-x">{clip.fileName}</span>
+                            
 
                         </div>
 
