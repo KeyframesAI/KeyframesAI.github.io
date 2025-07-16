@@ -1,7 +1,7 @@
 'use client'
 
-import Home from "./Home";
+import Projects from "./(pages)/projects/page";
 
 export default function Page() {
-  return <Home />
+  return <Projects />
 }
