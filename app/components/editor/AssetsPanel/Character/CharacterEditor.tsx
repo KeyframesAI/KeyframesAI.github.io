@@ -8,6 +8,8 @@ import { useAppDispatch, useAppSelector } from "../../../../store";
 import { setCharacters } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
 
+import {finetuneModel} from "../../../../utils/callHuggingface";
+
 interface CustomModalProps {
   isOpen: boolean;
 
@@ -147,6 +149,10 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         }
         
         console.log(updatedChars);
+        
+        if (imgChanged) {
+          const modelId = finetuneModel(newChar.images.map(img => img.file));
+        }
         
         dispatch(setCharacters(updatedChars));
         toast.success('Character saved successfully.');
