@@ -84,8 +84,8 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
             
           })
           .test("fileSize", "File size is too large", (value) => {
-            // Size less than or equal to 10,000,000 bytes (10MB).
-            return Array.from(value).every(val => val instanceof File && val.size <= 10000000);
+            // Size less than or equal to 100,000,000 bytes (100MB).
+            return Array.from(value).every(val => val instanceof File && val.size <= 100000000);
             
           }),
       })}
@@ -95,7 +95,6 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         const result = { ...values };
         // console.log(result); // The is the result object for the form.
         setSubmitting(false);
-        console.log(result);
         
         const updatedChars = [...characters || []];
         const newChar = {
@@ -116,6 +115,9 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
           });
         }
         
+        if (updatedChars[key].images.length != result.images.length) {
+            imgChanged=true;
+        }
         
         for (const file of result.images) {
             if (key!=-1) {
@@ -141,6 +143,19 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
             imgChanged = true;
         }
         
+        
+        
+        if (imgChanged) {
+          
+          if (key != -1 && updatedChars[key].modelId) {
+            newChar.modelId = updatedChars[key].modelId;
+          } else {
+            newChar.modelId = crypto.randomUUID();
+          }
+          
+          finetuneModel(newChar.images.map(img => img.file), newChar.modelId);
+        }
+        
         if (key==-1) {
           newChar.id = crypto.randomUUID();
           updatedChars.push(newChar);
@@ -149,10 +164,6 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         }
         
         console.log(updatedChars);
-        
-        if (imgChanged) {
-          const modelId = finetuneModel(newChar.images.map(img => img.file));
-        }
         
         dispatch(setCharacters(updatedChars));
         toast.success('Character saved successfully.');
@@ -283,7 +294,6 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
                     }
                     <div className="block py-2">
                     <button onClick={() => {
-                      setPreview(null);
                       setFieldValue("images", null);
                     }}>Clear</button>
                     </div>
