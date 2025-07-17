@@ -7,9 +7,10 @@ import { rehydrate, setMediaFiles } from '../../../store/slices/projectSlice';
 import { setActiveSection } from "../../../store/slices/projectSlice";
 import AddText from '../../../components/editor/AssetsPanel/tools-section/AddText';
 import AddMedia from '../../../components/editor/AssetsPanel/AddButtons/UploadMedia';
+import CharacterList from '../../../components/editor/AssetsPanel/tools-section/CharacterList';
 import MediaList from '../../../components/editor/AssetsPanel/tools-section/MediaList';
 import { useRouter } from 'next/navigation';
-import TextButton from "@/app/components/editor/AssetsPanel/SidebarButtons/TextButton";
+import CharactersButton from "@/app/components/editor/AssetsPanel/SidebarButtons/CharactersButton";
 import LibraryButton from "@/app/components/editor/AssetsPanel/SidebarButtons/LibraryButton";
 import ExportButton from "@/app/components/editor/AssetsPanel/SidebarButtons/ExportButton";
 import HomeButton from "@/app/components/editor/AssetsPanel/SidebarButtons/HomeButton";
@@ -23,7 +24,7 @@ import ExportList from "../../../components/editor/AssetsPanel/tools-section/Exp
 import Image from "next/image";
 import ProjectName from "../../../components/editor/player/ProjectName";
 
-import CharacterEditor from '../../../components/editor/AssetsPanel/Character/CharacterEditor';
+import AddCharacter from '../../../components/editor/AssetsPanel/Character/AddCharacter';
 
 export default function Project({ params }: { params: { id: string } }) {
     const { id } = params;
@@ -83,7 +84,7 @@ export default function Project({ params }: { params: { id: string } }) {
     }, [projectState, dispatch]);
 
 
-    const handleFocus = (section: "media" | "text" | "export") => {
+    const handleFocus = (section: "character" | "media" | "text" | "export") => {
         dispatch(setActiveSection(section));
     };
 
@@ -105,6 +106,7 @@ export default function Project({ params }: { params: { id: string } }) {
                 <div className="flex-[0.1] min-w-[60px] max-w-[100px] border-r border-gray-700 overflow-y-auto p-4">
                     <div className="flex flex-col space-y-2">
                         <HomeButton />
+                        <CharactersButton onClick={() => handleFocus("character")} />
                         <LibraryButton onClick={() => handleFocus("media")} />
                         <ExportButton onClick={() => handleFocus("export")} />
                         {/* TODO: add shortcuts guide but in a better way */}
@@ -114,11 +116,18 @@ export default function Project({ params }: { params: { id: string } }) {
 
                 {/* Add media and text */}
                 <div className="flex-[0.3] min-w-[200px] border-r border-gray-800 overflow-y-auto p-4">
+                    {activeSection === "character" && (
+                        <div>
+                            <h2 className="text-lg flex flex-row gap-2 items-center justify-center font-semibold mb-2">
+                                <AddCharacter />
+                            </h2>
+                            <CharacterList />
+                        </div>
+                    )}
                     {activeSection === "media" && (
                         <div>
                             <h2 className="text-lg flex flex-row gap-2 items-center justify-center font-semibold mb-2">
                                 <AddMedia />
-                                <CharacterEditor />
                             </h2>
                             <MediaList />
                         </div>

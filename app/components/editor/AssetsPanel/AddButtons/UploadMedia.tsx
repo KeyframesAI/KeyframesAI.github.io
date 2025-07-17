@@ -34,13 +34,13 @@ export default function AddMedia() {
                     className="Black"
                     height={12}
                     width={12}
-                    src="https://www.svgrepo.com/show/514275/upload-cloud.svg"
+                    src="https://www.svgrepo.com/show/535454/image.svg"
                 />
-                <span className="text-xs">Add Media</span>
+                <span className="text-xs">Add Background</span>
             </label>
             <input
                 type="file"
-                accept="video/*,audio/*,image/*"
+                accept="video/*,image/*"
                 multiple
                 onChange={handleFileChange}
                 className="hidden"

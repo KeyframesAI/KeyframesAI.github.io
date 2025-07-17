@@ -1,10 +1,13 @@
 export type MediaType = 'video' | 'audio' | 'image' | 'unknown';
 
+export type CharacterType = 'humanoid' | 'animal' | 'other';
+
 export interface UploadedFile {
     id: string;
     file: File;
     type?: MediaType;
     src?: string;
+    name?: string;
 }
 
 export interface MediaFile {
@@ -32,6 +35,15 @@ export interface MediaFile {
 
     // Effects
     crop?: { x: number; y: number; width: number; height: number };
+}
+
+
+export interface Character {
+    id: string;
+    name: string;
+    images: UploadedFile[];
+    type: CharacterType;
+    modelId?: string;
 }
 
 export interface TextElement {
@@ -86,6 +98,7 @@ export type ActiveElement = 'media' | 'text' | 'export';
 export interface ProjectState {
     id: string;
     mediaFiles: MediaFile[];
+    characters?: Character[];
     textElements: TextElement[];
     filesID?: string[],
     currentTime: number;

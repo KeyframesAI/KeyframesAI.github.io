@@ -106,6 +106,9 @@ export const listFiles = async () => {
     }
 };
 
+
+
+
 // Project storage functions
 export const storeProject = async (project: any) => {
     if (typeof window === 'undefined') return null;
