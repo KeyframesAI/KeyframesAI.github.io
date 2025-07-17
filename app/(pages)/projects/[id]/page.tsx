@@ -23,6 +23,8 @@ import ExportList from "../../../components/editor/AssetsPanel/tools-section/Exp
 import Image from "next/image";
 import ProjectName from "../../../components/editor/player/ProjectName";
 
+import CharacterEditor from '../../../components/editor/AssetsPanel/Character/CharacterEditor';
+
 export default function Project({ params }: { params: { id: string } }) {
     const { id } = params;
     const dispatch = useAppDispatch();
@@ -116,6 +118,7 @@ export default function Project({ params }: { params: { id: string } }) {
                         <div>
                             <h2 className="text-lg flex flex-row gap-2 items-center justify-center font-semibold mb-2">
                                 <AddMedia />
+                                <CharacterEditor />
                             </h2>
                             <MediaList />
                         </div>
