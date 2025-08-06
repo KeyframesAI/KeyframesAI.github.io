@@ -46,6 +46,31 @@ export interface Character {
     modelId?: string;
 }
 
+
+export interface Pose {
+    id: string;
+}
+
+export interface Frame {
+    id: string;
+    order: number;
+    image: File;
+    isKeyframe: boolean;
+    pose?: Pose;
+}
+
+export interface Animation {
+    id: string;
+    name: string;
+    frames: Frame[];
+    fps: number;
+    order: number;
+    startTime: number;
+    character?: string;
+}
+
+
+
 export interface TextElement {
     id: string;
     text: string;                     // The actual text content
@@ -99,6 +124,7 @@ export interface ProjectState {
     id: string;
     mediaFiles: MediaFile[];
     characters?: Character[];
+    animations?: Animation[];
     textElements: TextElement[];
     filesID?: string[],
     currentTime: number;

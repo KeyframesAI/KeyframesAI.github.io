@@ -102,9 +102,28 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
             name: result.charName,
             images: [],
             type: result.charType,
+            modelId: crypto.randomUUID(),
         };
         
-        var imgChanged = false;
+        
+        
+        for (const file of result.images) {
+            
+            const fileId = crypto.randomUUID();
+            const newImg = {
+                id: fileId,
+                file: file,
+                name: file.name,
+                type: 'image',
+            };
+    
+            newChar.images.push(newImg);
+        }
+        
+        
+        finetuneModel(newChar.images.map(img => img.file), newChar.modelId);
+        
+        
         var key = -1;
         
         if (charId != "") {
@@ -115,49 +134,6 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
           });
         }
         
-        console.log(key);
-        console.log(charId);
-        
-        if (key==-1 || updatedChars[key].images.length != result.images.length) {
-            imgChanged=true;
-        }
-        
-        for (const file of result.images) {
-            if (key!=-1) {
-              const exists = updatedChars[key].images.find((img) => img.name == file.name);
-          
-              if (exists) {
-                newChar.images.push(exists)
-                continue;
-              }
-            }
-            
-            
-            const fileId = crypto.randomUUID();
-            //await storeFile(file, fileId);
-            const newImg = {
-                id: fileId,
-                file: file,
-                name: file.name,
-                type: 'image',
-            };
-    
-            newChar.images.push(newImg)
-            imgChanged = true;
-        }
-        
-        
-        
-        if (imgChanged) {
-          
-          if (key != -1 && updatedChars[key].modelId) {
-            newChar.modelId = updatedChars[key].modelId;
-          } else {
-            newChar.modelId = crypto.randomUUID();
-          }
-          
-          finetuneModel(newChar.images.map(img => img.file), newChar.modelId);
-        }
         
         if (key==-1) {
           newChar.id = crypto.randomUUID();

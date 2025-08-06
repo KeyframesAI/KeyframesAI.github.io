@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TextElement, MediaFile, Character, ActiveElement, ExportConfig } from '../../types';
+import { TextElement, MediaFile, Character, Animation, ActiveElement, ExportConfig } from '../../types';
 import { ProjectState } from '../../types';
 
 export const initialState: ProjectState = {
@@ -9,6 +9,7 @@ export const initialState: ProjectState = {
     lastModified: new Date().toISOString(),
     mediaFiles: [],
     characters: [],
+    animations: [],
     textElements: [],
     currentTime: 0,
     isPlaying: false,
@@ -55,6 +56,9 @@ const projectStateSlice = createSlice({
         },
         setCharacters: (state, action: PayloadAction<Character[]>) => {
             state.characters = action.payload;
+        },
+        setAnimations: (state, action: PayloadAction<Animation[]>) => {
+            state.animations = action.payload;
         },
         setProjectName: (state, action: PayloadAction<string>) => {
             state.projectName = action.payload;
@@ -128,6 +132,7 @@ const projectStateSlice = createSlice({
 export const {
     setMediaFiles,
     setCharacters,
+    setAnimations,
     setTextElements,
     setCurrentTime,
     setProjectName,

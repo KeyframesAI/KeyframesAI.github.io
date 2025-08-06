@@ -5,7 +5,7 @@ import * as Yup from "yup";
 import toast from 'react-hot-toast';
 
 import { useAppDispatch, useAppSelector } from "../../../../store";
-import { setCharacters } from "../../../../store/slices/projectSlice";
+import { setAnimations } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
 
 import {poseTransfer} from "../../../../utils/callHuggingface";
@@ -37,6 +37,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
   
 
   const { characters } = useAppSelector((state) => state.projectState);
+  const { animations } = useAppSelector((state) => state.projectState);
   const dispatch = useAppDispatch();
   
   const modalStyle = {
@@ -52,6 +53,19 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
 
   }, [characters]);
   
+  
+  async function getFileFromUrl(url, name, defaultType = 'image/png'){
+    console.log(url);
+    const response = await fetch(url);
+    console.log(response);
+    
+    const data = await response.blob();
+    return new File([data], name, {
+      type: data.type || defaultType,
+    });
+  }
+  
+  //getFileFromUrl("https://acmyu-keyframesai.hf.space/gradio_api/file=/tmp/gradio/6ec812eefefdcb1da6c9cb9f728b6954750506d22f771de050d322371e14ee50/image.png", "t.png");
 
   return (
     <Formik
@@ -82,11 +96,41 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         onRequestClose();
         
         const ch = characters.find((c) => c.id == charId);
-        const frames = await poseTransfer(result, ch.images[0], ch.modelId);
+        const frames = await poseTransfer(result, ch.images, ch.modelId);
         
         console.log(frames);
         
+        const updatedAnimations = [...animations || []];
+        const newAnimation = {
+            id: crypto.randomUUID(),
+            name: ch.name,
+            frames: [],
+            fps: 12,
+            order: 0,
+            startTime: 0,
+            character: charId,
+        };
         
+        var c = 0;
+        for (const f of frames) {
+            const url = f.image.url;
+            const img = await getFileFromUrl(url, url.substring(url.lastIndexOf('/') + 1));
+            console.log(img);
+        
+            const newFrame = {
+                id: crypto.randomUUID(),
+                order: c,
+                image: img,
+                isKeyframe: false,
+            };
+            
+            newAnimation.frames.push(newFrame);
+            
+            c++;
+        }
+        
+        updatedAnimations.push(newAnimation);
+        //dispatch(setAnimations(updatedAnimations));
         
         
         
