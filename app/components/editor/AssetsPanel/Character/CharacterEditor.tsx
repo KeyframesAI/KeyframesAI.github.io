@@ -115,7 +115,10 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
           });
         }
         
-        if (updatedChars[key].images.length != result.images.length) {
+        console.log(key);
+        console.log(charId);
+        
+        if (key==-1 || updatedChars[key].images.length != result.images.length) {
             imgChanged=true;
         }
         

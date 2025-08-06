@@ -36,7 +36,7 @@ export default function AddMedia() {
                     width={12}
                     src="https://www.svgrepo.com/show/535454/image.svg"
                 />
-                <span className="text-xs">Add Background</span>
+                <span className="text-xs">Add Keyframe</span>
             </label>
             <input
                 type="file"

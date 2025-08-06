@@ -4,7 +4,7 @@ import { listFiles, deleteFile, useAppSelector, storeFile, getFile } from '@/app
 import { setCharacters } from '@/app/store/slices/projectSlice';
 import { Character } from '@/app/types';
 import { useAppDispatch } from '@/app/store';
-import AddMedia from '../AddButtons/AddMedia';
+import AddMotionVideo from '../AddButtons/AddMotionVideo';
 import EditCharacter from '../Character/EditCharacter';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -28,7 +28,7 @@ export default function CharacterList() {
                         <div key={char.id} className="border border-gray-700 p-3 rounded bg-black bg-opacity-30 hover:bg-opacity-40 transition-all">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                    <AddMedia fileId={char.id} />
+                                    <AddMotionVideo charId={char.id} />
                                     
                                     <span className="py-1 px-1 text-sm flex-1 truncate" title={char.name}>
                                         {char.name}

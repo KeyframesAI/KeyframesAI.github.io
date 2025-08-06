@@ -13,7 +13,7 @@ export default function LibraryButton({ onClick }: { onClick: () => void }) {
                 width={30}
                 src="https://www.svgrepo.com/show/535454/image.svg"
             />
-            <span className="text-xs">Background</span>
+            <span className="text-xs">Keyframes</span>
         </button>
     );
 }
