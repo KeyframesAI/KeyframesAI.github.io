@@ -21,6 +21,7 @@ export const initialState: ProjectState = {
     activeSection: 'media',
     activeElement: null,
     activeElementIndex: 0,
+    activeAnimationIndex: 0,
     resolution: { width: 1920, height: 1080 },
     fps: 30,
     aspectRatio: '16:9',
@@ -95,6 +96,9 @@ const projectStateSlice = createSlice({
         setActiveElementIndex: (state, action: PayloadAction<number>) => {
             state.activeElementIndex = action.payload;
         },
+        setActiveAnimationIndex: (state, action: PayloadAction<number>) => {
+            state.activeAnimationIndex = action.payload;
+        },
         setFilesID: (state, action: PayloadAction<string[]>) => {
             state.filesID = action.payload;
         },
@@ -148,6 +152,7 @@ export const {
     setActiveSection,
     setActiveElement,
     setActiveElementIndex,
+    setActiveAnimationIndex,
     setTimelineZoom,
     rehydrate,
     createNewProject,

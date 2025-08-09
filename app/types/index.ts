@@ -141,6 +141,8 @@ export interface ProjectState {
     activeSection: ActiveElement;
     activeElement: ActiveElement | null;
     activeElementIndex: number;
+    activeAnimationIndex: number;
+    
 
     resolution: { width: number; height: number };
     fps: number;

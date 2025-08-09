@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useMemo } from "react";
 import Moveable, { OnScale, OnDrag, OnResize, OnRotate } from "react-moveable";
 import { useAppSelector } from "@/app/store";
-import { setAnimations, setActiveElement, setActiveElementIndex, setMediaFiles } from "@/app/store/slices/projectSlice";
+import { setAnimations, setActiveAnimationIndex, setActiveElementIndex, setMediaFiles } from "@/app/store/slices/projectSlice";
 import { memo, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useAppDispatch } from '@/app/store';
@@ -13,7 +13,7 @@ import { debounce, throttle } from "lodash";
 
 export default function FramesTimeline({ aniId }: { aniId: string }) {
     const targetRefs = useRef<Record<string, HTMLDivElement | null>>({});
-    const { mediaFiles, textElements, activeElement, activeElementIndex } = useAppSelector((state) => state.projectState);
+    const { mediaFiles, textElements, activeAnimationIndex, activeElementIndex } = useAppSelector((state) => state.projectState);
     const dispatch = useDispatch();
     const appDispatch = useAppDispatch();
     const moveableRef = useRef<Record<string, Moveable | null>>({});
@@ -68,11 +68,12 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
     };
       
 
-    const handleClick = (element: string, index: number | string) => {
-        if (element === 'media') {
-            dispatch(setActiveElement('media') as any);
+    const handleClick = (aniIndex: number, index: number | string) => {
+        if (aniIndex === ani.id) {
+            const actualAniIndex = animations.findIndex(a => a.id === aniIndex as unknown as string);
+            dispatch(setActiveAnimationIndex(actualAniIndex) as any);
             // TODO: cause we pass id when media to find the right index i will change this later (this happens cause each timeline pass its index not index from mediaFiles array)
-            const actualIndex = mediaFiles.findIndex(clip => clip.id === index as unknown as string);
+            const actualIndex = frames.findIndex(frame => frame.id === index as unknown as string);
             dispatch(setActiveElementIndex(actualIndex));
         }
     };
@@ -147,8 +148,8 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                                   }
                                   
                               }}
-                              onClick={() => handleClick('media', frame.id)}
-                              className={`absolute border border-gray-500 border-opacity-50 rounded-md top-2 h-32 rounded bg-[#27272A] text-white text-sm flex items-center justify-center cursor-pointer ${activeElement === 'media' && ani.frames[activeElementIndex].id === frame.id ? 'bg-[#3F3F46] border-blue-500' : ''}`}
+                              onClick={() => handleClick(ani.id, frame.id)}
+                              className={`absolute border border-gray-500 border-opacity-50 rounded-md top-2 h-32 rounded bg-[#27272A] text-white text-sm flex items-center justify-center cursor-pointer ${animations[activeAnimationIndex].id === ani.id && ani.frames[activeElementIndex].id === frame.id ? 'bg-[#3F3F46] border-blue-500' : ''}`}
                               style={{
                                   left: `${frame.order * timelineZoom}px`,
                                   width: `150px`, //`${(clip.positionEnd - clip.positionStart) * timelineZoom}px`,
@@ -179,7 +180,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                               }}
                               target={targetRefs.current[frame.id] || null}
                               container={null}
-                              renderDirections={activeElement === 'media' && mediaFiles[activeElementIndex].id === frame.id ? ['w', 'e'] : []}
+                              renderDirections={animations[activeAnimationIndex].id === ani.id && frames[activeElementIndex].id === frame.id ? ['w', 'e'] : []}
                               draggable={true}
                               throttleDrag={0}
                               rotatable={false}
@@ -193,7 +194,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                                   delta, dist,
                                   transform,
                               }: OnDrag) => {
-                                  handleClick('media', frame.id)
+                                  handleClick(ani.id, frame.id)
                                   handleDrag(frame, target as HTMLElement, left);
                               }}
                               onDragEnd={({ target, isDrag, clientX, clientY }) => {
@@ -209,22 +210,16 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                                   delta, direction,
                               }: OnResize) => {
                                   if (direction[0] === 1) {
-                                      handleClick('media', frame.id)
+                                      handleClick(ani.id, frame.id)
                                       delta[0] && (target!.style.width = `${width}px`);
                                       handleRightResize(frame, target as HTMLElement, width);
 
-                                  }
-                                  else if (direction[0] === -1) {
-                                      // TODO: handle left resize
-                                      // handleClick('media', clip.id)
-                                      // delta[0] && (target!.style.width = `${width}px`);
-                                      // handleLeftResize(clip, target as HTMLElement, width);
                                   }
 
                               }}
                               onResizeEnd={({ target, isDrag, clientX, clientY }) => {
                               }}
-                              className={activeElement === 'media' && mediaFiles[activeElementIndex].id === frame.id ? '' : 'moveable-control-box-hidden'}
+                              className={animations[activeAnimationIndex].id === ani.id && frames[activeElementIndex].id === frame.id ? '' : 'moveable-control-box-hidden'}
 
                           />
 

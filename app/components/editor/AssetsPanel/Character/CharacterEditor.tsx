@@ -102,7 +102,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
             name: result.charName,
             images: [],
             type: result.charType,
-            modelId: crypto.randomUUID(),
+            
         };
         
         
@@ -135,16 +135,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         }
         
         
-        if (key==-1) {
-          newChar.id = crypto.randomUUID();
-          updatedChars.push(newChar);
-        } else {
-          updatedChars[key] = newChar;
-        }
         
-        console.log(updatedChars);
-        
-        dispatch(setCharacters(updatedChars));
         
         
         resetForm();
@@ -153,7 +144,25 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         try {
           const toast_id = toast.loading('Saving character...');
           
-          await finetuneModel(newChar.images.map(img => img.file), newChar.modelId);
+          const modelId = crypto.randomUUID();
+          await finetuneModel(newChar.images.map(img => img.file), modelId);
+          newChar.modelId = modelId;
+          
+          console.log('done finetuning');
+          console.log(modelId);
+          
+          
+          if (key==-1) {
+            newChar.id = crypto.randomUUID();
+            updatedChars.push(newChar);
+          } else {
+            updatedChars[key] = newChar;
+          }
+          
+          console.log(updatedChars);
+          
+          dispatch(setCharacters(updatedChars));
+          
           
           toast.success('Character saved successfully.', { id: toast_id });
         } catch(err) {
