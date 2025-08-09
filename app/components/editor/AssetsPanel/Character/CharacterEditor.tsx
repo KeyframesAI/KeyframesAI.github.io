@@ -121,7 +121,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         }
         
         
-        finetuneModel(newChar.images.map(img => img.file), newChar.modelId);
+        
         
         
         var key = -1;
@@ -145,10 +145,21 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         console.log(updatedChars);
         
         dispatch(setCharacters(updatedChars));
-        toast.success('Character saved successfully.');
+        
         
         resetForm();
         onRequestClose();
+        
+        try {
+          const toast_id = toast.loading('Saving character...');
+          
+          await finetuneModel(newChar.images.map(img => img.file), newChar.modelId);
+          
+          toast.success('Character saved successfully.', { id: toast_id });
+        } catch(err) {
+          toast.error('Error saving the character', { id: toast_id });
+          throw err;
+        }
         
         
       }}

@@ -1,17 +1,28 @@
 import { useAppSelector } from "@/app/store";
-import { setMarkerTrack, setTextElements, setMediaFiles, setTimelineZoom, setCurrentTime, setIsPlaying, setActiveElement } from "@/app/store/slices/projectSlice";
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { setAnimations, setMarkerTrack, setTextElements, setMediaFiles, setTimelineZoom, setCurrentTime, setIsPlaying, setActiveElement } from "@/app/store/slices/projectSlice";
+import { memo, useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { useDispatch } from "react-redux";
+import { useAppDispatch } from '@/app/store';
 import Image from "next/image";
 import Header from "./Header";
-import ImageTimeline from "./elements-timeline/ImageTimeline";
+import FramesTimeline from "./elements-timeline/FramesTimeline";
 import { throttle } from 'lodash';
 import GlobalKeyHandlerProps from "../../../components/editor/keys/GlobalKeyHandlerProps";
 import toast from "react-hot-toast";
 export const Timeline = () => {
     const { currentTime, timelineZoom, enableMarkerTracking, activeElement, activeElementIndex, mediaFiles, textElements, duration, isPlaying } = useAppSelector((state) => state.projectState);
     const dispatch = useDispatch();
+    const appDispatch = useAppDispatch();
     const timelineRef = useRef<HTMLDivElement>(null)
+    
+    const { animations } = useAppSelector((state) => state.projectState);
+    const [anis, setAnis] = useState<Animation[]>([]);
+    
+    useEffect(() => {
+        setAnis(animations);
+
+    }, [animations]);
+    
 
     const throttledZoom = useMemo(() =>
         throttle((value: number) => {
@@ -199,8 +210,12 @@ export const Timeline = () => {
 
         dispatch(setCurrentTime(clampedTime));
     };
+    
+    
+    
 
     return (
+
         <div className="flex w-full flex-col gap-2">
             <div className="flex flex-row items-center justify-between gap-12 w-full">
                 <div className="flex flex-row items-center gap-2">
@@ -264,12 +279,14 @@ export const Timeline = () => {
                             width={30}
                             src="https://www.svgrepo.com/show/511788/delete-1487.svg"
                         />
-                        <span className="ml-2">Delete <span className="text-xs">(Del)</span></span>
+                        <span className="ml-2">Delete Frame <span className="text-xs">(Del)</span></span>
                     </button>
+                    
+                    
                 </div>
 
                 {/* Timeline Zoom */}
-                <div className="flex flex-row justify-between items-center gap-2 mr-4">
+                {/*<div className="flex flex-row justify-between items-center gap-2 mr-4">
                     <label className="block text-sm mt-1 font-semibold text-white">Zoom</label>
                     <span className="text-white text-lg">-</span>
                     <input
@@ -282,7 +299,7 @@ export const Timeline = () => {
                         className="w-[100px] bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:border-white-500"
                     />
                     <span className="text-white text-lg">+</span>
-                </div>
+                </div>*/}
             </div>
 
             <div
@@ -291,7 +308,7 @@ export const Timeline = () => {
                 onClick={handleClick}
             >
                 {/* Timeline Header */}
-                <Header />
+                {/*<Header />*/}
 
                 <div className="bg-[#1E1D21]"
 
@@ -307,11 +324,16 @@ export const Timeline = () => {
                         }}
                     />
                     {/* Timeline elements */}
-                    <div className="w-full">
-
-                        <div className="relative h-48 z-10">
-                            <ImageTimeline />
+                    <div className="w-full h-96">
+                      
+                      {anis.map((ani) => (
+                        <div key={ani.id} >
+                            
+                            <FramesTimeline aniId={ani.id} />
+                          
                         </div>
+                        
+                      ))}
 
                     </div>
                 </div>

@@ -3,6 +3,42 @@
 //import React from "react";
 import { Client, handle_file } from "@gradio/client";
 
+/*
+const https = require('https'); // Use https for secure URLs
+const fs = require('fs');
+
+
+var request = require('request');
+*/
+
+
+const hg_space = "acmyu/KeyframesAI2"
+
+async function getFileFromUrl(url, name, defaultType = 'image/png'){
+
+  //console.log(url);
+  const response = await fetch(url);
+  //console.log(response);
+  
+  const data = await response.blob();
+  return new File([data], name, {
+    type: data.type || defaultType,
+  });
+  
+}
+
+async function getFrames(data){
+  var frames = [];
+  var c = 0;
+  for (const frame of data) {
+      const url = frame.image.url;
+      const img = await getFileFromUrl(url, 'frame'+c+url.substring(url.lastIndexOf('.')));
+      frames.push(img);
+      c++;
+  }
+  return frames;
+}
+
 export const finetuneModel = async (images: File[], modelId: string) => {
 
   
@@ -10,7 +46,7 @@ export const finetuneModel = async (images: File[], modelId: string) => {
   console.log(hgToken);
   
   
-  const app = await Client.connect("acmyu/KeyframesAI", { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
   
   const imgs = []
   images.forEach((img) => {
@@ -36,14 +72,19 @@ export const finetuneModel = async (images: File[], modelId: string) => {
 };
 
 
+
+
 export const poseTransfer = async (video: File, images: File[], modelId: string) => {
+  /*var frames = [];
+  const img = await getFileFromUrl('https://tmpfiles.org/dl/9447583/41976c0d-67b0-42cc-8179-03a72f55dfac.png', 'test.png');
+  frames.push(img);*/
 
   
   const hgToken = process.env.NEXT_PUBLIC_HG_TOKEN;
   console.log(hgToken);
   
   
-  const app = await Client.connect("acmyu/KeyframesAI", { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
   
   
   const imgs = []
@@ -63,7 +104,17 @@ export const poseTransfer = async (video: File, images: File[], modelId: string)
   console.log("done pose transfer");
   console.log(result);
 
-  return result.data[1];
+  
+  const frames = await getFrames(result.data[1]);
+  const thumbnails = await getFrames(result.data[2]);
+  
+  
+  console.log(frames);
+  console.log(thumbnails)
+
+  return [frames, thumbnails];
 };
+
+
 
 

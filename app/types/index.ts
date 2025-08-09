@@ -55,6 +55,7 @@ export interface Frame {
     id: string;
     order: number;
     image: File;
+    thumbnail: File;
     isKeyframe: boolean;
     pose?: Pose;
 }

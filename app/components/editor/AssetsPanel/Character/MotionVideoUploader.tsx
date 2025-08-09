@@ -54,16 +54,6 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
   }, [characters]);
   
   
-  async function getFileFromUrl(url, name, defaultType = 'image/png'){
-    console.log(url);
-    const response = await fetch(url);
-    console.log(response);
-    
-    const data = await response.blob();
-    return new File([data], name, {
-      type: data.type || defaultType,
-    });
-  }
   
   //getFileFromUrl("https://acmyu-keyframesai.hf.space/gradio_api/file=/tmp/gradio/6ec812eefefdcb1da6c9cb9f728b6954750506d22f771de050d322371e14ee50/image.png", "t.png");
 
@@ -90,49 +80,57 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         // console.log(result); // The is the result object for the form.
         setSubmitting(false);
         
-        toast.success('Animation added successfully.');
+        const toast_id = toast.loading('Generating animation...');
+        
         
         resetForm();
         onRequestClose();
         
-        const ch = characters.find((c) => c.id == charId);
-        const frames = await poseTransfer(result, ch.images, ch.modelId);
+        try {
+          const ch = characters.find((c) => c.id == charId);
+          const [frames, thumbnails] = await poseTransfer(result, ch.images, ch.modelId);
+          
+          var frames_zipped = frames.map(function(e, i) {
+            return [e, thumbnails[i]];
+          });
         
-        console.log(frames);
+          const updatedAnimations = [...animations || []];
+          const newAnimation = {
+              id: crypto.randomUUID(),
+              name: ch.name,
+              frames: [],
+              fps: 12,
+              order: 0,
+              startTime: 0,
+              character: charId,
+          };
+          
+          var c = 0;
+          for (const f of frames_zipped) {
+          
+              const newFrame = {
+                  id: crypto.randomUUID(),
+                  order: c,
+                  image: f[0],
+                  thumbnail: f[1],
+                  isKeyframe: true,
+              };
+              
+              newAnimation.frames.push(newFrame);
+              
+              c++;
+          }
+          
+          updatedAnimations.push(newAnimation);
+          dispatch(setAnimations(updatedAnimations));
+          
+          
+          toast.success('Animation added successfully.', { id: toast_id });
         
-        const updatedAnimations = [...animations || []];
-        const newAnimation = {
-            id: crypto.randomUUID(),
-            name: ch.name,
-            frames: [],
-            fps: 12,
-            order: 0,
-            startTime: 0,
-            character: charId,
-        };
-        
-        var c = 0;
-        for (const f of frames) {
-            const url = f.image.url;
-            const img = await getFileFromUrl(url, url.substring(url.lastIndexOf('/') + 1));
-            console.log(img);
-        
-            const newFrame = {
-                id: crypto.randomUUID(),
-                order: c,
-                image: img,
-                isKeyframe: false,
-            };
-            
-            newAnimation.frames.push(newFrame);
-            
-            c++;
+        } catch(err) {
+          toast.error('Error generating the animation', { id: toast_id });
+          throw err;
         }
-        
-        updatedAnimations.push(newAnimation);
-        //dispatch(setAnimations(updatedAnimations));
-        
-        
         
       }}
       enableReinitialize={true} // Enable reinitialization of initial values
@@ -214,6 +212,8 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                 className="py-1 text-sm italic font-semibold text-red-500 "
               />
             </div>
+            
+            <img id="server-result-frame"></img>
             
 
             <div className="flex justify-end mt-4 space-x-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-700">

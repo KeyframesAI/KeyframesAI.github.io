@@ -165,7 +165,6 @@ export default function Project({ params }: { params: { id: string } }) {
             {/* Timeline at bottom */}
             <div className="flex flex-row border-t border-gray-500">
                 <div className=" bg-darkSurfacePrimary flex flex-col items-center justify-center mt-20 p-2">
-
                     
                 </div>
                 <Timeline />
