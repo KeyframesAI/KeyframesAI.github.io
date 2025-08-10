@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { getFile, storeProject, useAppDispatch, useAppSelector } from "../../../store";
+import { getFile, listFiles, storeProject, useAppDispatch, useAppSelector } from "../../../store";
 import { getProject } from "../../../store";
 import { setCurrentProject, updateProject } from "../../../store/slices/projectsSlice";
-import { rehydrate, setMediaFiles } from '../../../store/slices/projectSlice';
+import { rehydrate, setMediaFiles, setAnimations } from '../../../store/slices/projectSlice';
 import { setActiveSection } from "../../../store/slices/projectSlice";
 import AddText from '../../../components/editor/AssetsPanel/tools-section/AddText';
 import AddMedia from '../../../components/editor/AssetsPanel/AddButtons/UploadMedia';
@@ -19,7 +19,7 @@ import MediaProperties from "../../../components/editor/PropertiesSection/MediaP
 import TextProperties from "../../../components/editor/PropertiesSection/TextProperties";
 import { Timeline } from "../../../components/editor/timeline/Timline";
 import { PreviewPlayer } from "../../../components/editor/player/remotion/Player";
-import { MediaFile } from "@/app/types";
+import { MediaFile, Animation } from "@/app/types";
 import ExportList from "../../../components/editor/AssetsPanel/tools-section/ExportList";
 import Image from "next/image";
 import ProjectName from "../../../components/editor/player/ProjectName";
@@ -66,6 +66,26 @@ export default function Project({ params }: { params: { id: string } }) {
                             return { ...media, src: URL.createObjectURL(file) };
                         })
                     )));
+                    
+                    
+                    const newAnimations = await Promise.all(
+                        project.animations.map(async (ani: Animation) => {
+                          const frames = await Promise.all(
+                              ani.frames.map(async (frame: Frame) => {
+                                  
+                                  const file = await getFile(frame.image.fileId);
+                                  const image = { ...frame.image, src: URL.createObjectURL(file) };
+                                  
+                                  const thumb = await getFile(frame.thumbnail.fileId);
+                                  const thumbnail = { ...frame.thumbnail, src: URL.createObjectURL(thumb) };
+                                  
+                                  return { ...frame, image: image, thumbnail: thumbnail };
+                              })
+                          );
+                          return { ...ani, frames: frames };
+                        })
+                    );
+                    dispatch(setAnimations(newAnimations));
                 }
             }
         };

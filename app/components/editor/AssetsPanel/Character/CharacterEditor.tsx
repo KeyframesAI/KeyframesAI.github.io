@@ -69,7 +69,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
     <Formik
       initialValues={{
         charName: char ? char.name : "",
-        charType: char ? char.type : "",
+        charType: char ? char.type : "Humanoid",
         images: char ? char.images.map(img => img.file) : (null as File | null),
       }}
       // In summary, Yup is responsible for the schema-based validation, while Formik handles form management and state. Combining Yup with Formik provides a robust solution for building forms with client-side validation.

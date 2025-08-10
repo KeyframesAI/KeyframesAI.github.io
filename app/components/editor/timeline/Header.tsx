@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { useAppSelector } from '../../../store';
 export const Header = () => {
     const { duration, currentTime, timelineZoom, enableMarkerTracking } = useAppSelector((state) => state.projectState);
-    const secondInterval = 0.2; // Every 0.2s
-    const totalSeconds = Math.max(duration + 2, 61);
+    const secondInterval = 0.1; // Every 0.1s
+    const totalSeconds = Math.max(duration + 2, 3);
     const tickMarkers = Array.from({ length: totalSeconds / secondInterval }, (_, i) => i * secondInterval);
 
     // to track the marker when time changes
@@ -11,7 +11,7 @@ export const Header = () => {
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const roundedTime = Math.floor(currentTime);
+        const roundedTime = Math.floor(currentTime * 10) / 10;
         const el = markerRefs.current[roundedTime];
         if (el && el.scrollIntoView && enableMarkerTracking) {
             el.scrollIntoView({
@@ -27,6 +27,7 @@ export const Header = () => {
             <div className="relative h-8">
                 {tickMarkers.map((marker) => {
                     const isWholeSecond = Number.isInteger(marker) && marker !== 0;
+                    marker = Math.floor(marker * 10) / 10;
                     return (
                         <div
                             ref={(el) => {

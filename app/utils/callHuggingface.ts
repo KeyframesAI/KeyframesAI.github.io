@@ -13,6 +13,7 @@ var request = require('request');
 
 
 const hg_space = "acmyu/KeyframesAI2"
+const train_steps = 100
 
 async function getFileFromUrl(url, name, defaultType = 'image/png'){
 
@@ -61,7 +62,7 @@ export const finetuneModel = async (images: File[], modelId: string) => {
         {"image":handle_file(images[2]),"caption":""}
         
       ],*/
-      train_steps: 10, 		
+      train_steps: train_steps, 		
       modelId: modelId, 
   });
 
@@ -74,7 +75,7 @@ export const finetuneModel = async (images: File[], modelId: string) => {
 
 
 
-export const poseTransfer = async (video: File, images: File[], modelId: string) => {
+export const poseTransfer = async (video: File, images: File[], modelId: string, resolution) => {
   /*var frames = [];
   const img = await getFileFromUrl('https://tmpfiles.org/dl/9447583/41976c0d-67b0-42cc-8179-03a72f55dfac.png', 'test.png');
   frames.push(img);*/
@@ -95,10 +96,12 @@ export const poseTransfer = async (video: File, images: File[], modelId: string)
   const result = await app.predict("/run_inference", { 		
       images: imgs,
       video_path: {"video":handle_file(video.video)},
-      train_steps: 10, 
+      train_steps: train_steps, 
       inference_steps: 10, 		
       fps: 12,
       modelId: modelId, 
+      img_width: resolution.width,
+      img_height: resolution.height,
   });
 
   console.log("done pose transfer");

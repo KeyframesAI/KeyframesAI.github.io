@@ -16,14 +16,15 @@ export const initialState: ProjectState = {
     isMuted: false,
     duration: 0,
     zoomLevel: 1,
-    timelineZoom: 100,
+    timelineZoom: 1800,
     enableMarkerTracking: true,
     activeSection: 'media',
     activeElement: null,
     activeElementIndex: 0,
     activeAnimationIndex: 0,
+    activeFrameIndex: 0,
     resolution: { width: 1920, height: 1080 },
-    fps: 30,
+    fps: 12,
     aspectRatio: '16:9',
     history: [],
     future: [],
@@ -31,7 +32,7 @@ export const initialState: ProjectState = {
         resolution: '1080p',
         quality: 'high',
         speed: 'fastest',
-        fps: 30,
+        fps: 12,
         format: 'mp4',
         includeSubtitles: false,
     },
@@ -44,6 +45,14 @@ const calculateTotalDuration = (
     const mediaDurations = mediaFiles.map(v => v.positionEnd);
     const textDurations = textElements.map(v => v.positionEnd);
     return Math.max(0, ...mediaDurations, ...textDurations);
+};
+
+const calculateAnimationDuration = (
+    animations: Animation[],
+): number => {
+    const durations = animations.map(v => v.frames.length);
+    
+    return Math.max(0, ...durations);
 };
 
 const projectStateSlice = createSlice({
@@ -60,6 +69,8 @@ const projectStateSlice = createSlice({
         },
         setAnimations: (state, action: PayloadAction<Animation[]>) => {
             state.animations = action.payload;
+            
+            state.duration = calculateAnimationDuration(state.animations) / state.fps;
         },
         setProjectName: (state, action: PayloadAction<string>) => {
             state.projectName = action.payload;
@@ -98,6 +109,9 @@ const projectStateSlice = createSlice({
         },
         setActiveAnimationIndex: (state, action: PayloadAction<number>) => {
             state.activeAnimationIndex = action.payload;
+        },
+        setActiveFrameIndex: (state, action: PayloadAction<number>) => {
+            state.activeFrameIndex = action.payload;
         },
         setFilesID: (state, action: PayloadAction<string[]>) => {
             state.filesID = action.payload;
@@ -153,6 +167,7 @@ export const {
     setActiveElement,
     setActiveElementIndex,
     setActiveAnimationIndex,
+    setActiveFrameIndex,
     setTimelineZoom,
     rehydrate,
     createNewProject,

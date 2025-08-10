@@ -6,6 +6,7 @@ import { useAppDispatch } from '@/app/store';
 import Image from "next/image";
 import Header from "./Header";
 import FramesTimeline from "./elements-timeline/FramesTimeline";
+import ImageTimeline from "./elements-timeline/ImageTimeline";
 import { throttle } from 'lodash';
 import GlobalKeyHandlerProps from "../../../components/editor/keys/GlobalKeyHandlerProps";
 import toast from "react-hot-toast";
@@ -31,136 +32,6 @@ export const Timeline = () => {
         [dispatch]
     );
 
-    const handleSplit = () => {
-        let element = null;
-        let elements = null;
-        let setElements = null;
-
-        if (!activeElement) {
-            toast.error('No element selected.');
-            return;
-        }
-
-        if (activeElement === 'media') {
-            elements = [...mediaFiles];
-            element = elements[activeElementIndex];
-            setElements = setMediaFiles;
-
-            if (!element) {
-                toast.error('No element selected.');
-                return;
-            }
-
-            const { positionStart, positionEnd } = element;
-
-            if (currentTime <= positionStart || currentTime >= positionEnd) {
-                toast.error('Marker is outside the selected element bounds.');
-                return;
-            }
-
-            const positionDuration = positionEnd - positionStart;
-
-            // Media logic (uses startTime/endTime for trimming)
-            const { startTime, endTime } = element;
-            const sourceDuration = endTime - startTime;
-            const ratio = (currentTime - positionStart) / positionDuration;
-            const splitSourceOffset = startTime + ratio * sourceDuration;
-
-            const firstPart = {
-                ...element,
-                id: crypto.randomUUID(),
-                positionStart,
-                positionEnd: currentTime,
-                startTime,
-                endTime: splitSourceOffset
-            };
-
-            const secondPart = {
-                ...element,
-                id: crypto.randomUUID(),
-                positionStart: currentTime,
-                positionEnd,
-                startTime: splitSourceOffset,
-                endTime
-            };
-
-            elements.splice(activeElementIndex, 1, firstPart, secondPart);
-        } else if (activeElement === 'text') {
-            elements = [...textElements];
-            element = elements[activeElementIndex];
-            setElements = setTextElements;
-
-            if (!element) {
-                toast.error('No element selected.');
-                return;
-            }
-
-            const { positionStart, positionEnd } = element;
-
-            if (currentTime <= positionStart || currentTime >= positionEnd) {
-                toast.error('Marker is outside the selected element.');
-                return;
-            }
-
-            const firstPart = {
-                ...element,
-                id: crypto.randomUUID(),
-                positionStart,
-                positionEnd: currentTime,
-            };
-
-            const secondPart = {
-                ...element,
-                id: crypto.randomUUID(),
-                positionStart: currentTime,
-                positionEnd,
-            };
-
-            elements.splice(activeElementIndex, 1, firstPart, secondPart);
-        }
-
-        if (elements && setElements) {
-            dispatch(setElements(elements as any));
-            dispatch(setActiveElement(null));
-            toast.success('Element split successfully.');
-        }
-    };
-
-    const handleDuplicate = () => {
-        let element = null;
-        let elements = null;
-        let setElements = null;
-
-        if (activeElement === 'media') {
-            elements = [...mediaFiles];
-            element = elements[activeElementIndex];
-            setElements = setMediaFiles;
-        } else if (activeElement === 'text') {
-            elements = [...textElements];
-            element = elements[activeElementIndex];
-            setElements = setTextElements;
-        }
-
-        if (!element) {
-            toast.error('No element selected.');
-            return;
-        }
-
-        const duplicatedElement = {
-            ...element,
-            id: crypto.randomUUID(),
-        };
-
-        if (elements) {
-            elements.splice(activeElementIndex + 1, 0, duplicatedElement as any);
-        }
-
-        if (elements && setElements) {
-            dispatch(setElements(elements as any));
-            dispatch(setActiveElement(null));
-            toast.success('Element duplicated successfully.');
-        }
-    };
 
     const handleDelete = () => {
         // @ts-ignore
@@ -207,7 +78,7 @@ export const Timeline = () => {
 
         const seconds = offsetX / timelineZoom;
         const clampedTime = Math.max(0, Math.min(duration, seconds));
-
+        
         dispatch(setCurrentTime(clampedTime));
     };
     
@@ -238,34 +109,6 @@ export const Timeline = () => {
                             src="https://www.svgrepo.com/show/447315/dismiss.svg"
                         />}
                         <span className="ml-2">Track Marker <span className="text-xs">(T)</span></span>
-                    </button>
-                    {/* Split */}
-                    <button
-                        onClick={handleSplit}
-                        className="bg-white border rounded-md border-transparent transition-colors flex flex-row items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] mt-2 font-medium text-sm sm:text-base h-auto px-2 py-1 sm:w-auto"
-                    >
-                        <Image
-                            alt="cut"
-                            className="h-auto w-auto max-w-[20px] max-h-[20px]"
-                            height={30}
-                            width={30}
-                            src="https://www.svgrepo.com/show/509075/cut.svg"
-                        />
-                        <span className="ml-2">Split <span className="text-xs">(S)</span></span>
-                    </button>
-                    {/* Duplicate */}
-                    <button
-                        onClick={handleDuplicate}
-                        className="bg-white border rounded-md border-transparent transition-colors flex flex-row items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] mt-2 font-medium text-sm sm:text-base h-auto px-2 py-1 sm:w-auto"
-                    >
-                        <Image
-                            alt="cut"
-                            className="h-auto w-auto max-w-[20px] max-h-[20px]"
-                            height={30}
-                            width={30}
-                            src="https://www.svgrepo.com/show/521623/duplicate.svg"
-                        />
-                        <span className="ml-2">Duplicate <span className="text-xs">(D)</span></span>
                     </button>
                     {/* Delete */}
                     <button
@@ -308,7 +151,7 @@ export const Timeline = () => {
                 onClick={handleClick}
             >
                 {/* Timeline Header */}
-                {/*<Header />*/}
+                <Header />
 
                 <div className="bg-[#1E1D21]"
 
@@ -325,8 +168,10 @@ export const Timeline = () => {
                     />
                     {/* Timeline elements */}
                     <div className="w-full h-96">
+                    
+                      <ImageTimeline />
                       
-                      {anis.map((ani) => (
+                      {anis.toReversed().map((ani) => (
                         <div key={ani.id} >
                             
                             <FramesTimeline aniId={ani.id} />
@@ -338,7 +183,7 @@ export const Timeline = () => {
                     </div>
                 </div>
             </div >
-            <GlobalKeyHandlerProps handleDuplicate={handleDuplicate} handleSplit={handleSplit} handleDelete={handleDelete} />
+            <GlobalKeyHandlerProps handleDelete={handleDelete} />
         </div>
 
     );

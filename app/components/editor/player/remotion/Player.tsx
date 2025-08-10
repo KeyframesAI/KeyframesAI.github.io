@@ -5,11 +5,11 @@ import { useRef, useState, useEffect } from "react";
 import { setIsPlaying } from "@/app/store/slices/projectSlice";
 import { useDispatch } from "react-redux";
 
-const fps = 30;
+
 
 export const PreviewPlayer = () => {
     const projectState = useAppSelector((state) => state.projectState);
-    const { duration, currentTime, isPlaying, isMuted } = projectState;
+    const { duration, currentTime, isPlaying, isMuted, fps } = projectState;
     const playerRef = useRef<PlayerRef>(null);
     const dispatch = useDispatch();
 
@@ -57,6 +57,8 @@ export const PreviewPlayer = () => {
             playerRef.current.unmute();
         }
     }, [isMuted]);
+    
+    //console.log(duration, fps);
 
     return (
         <Player

@@ -4,8 +4,8 @@ import { ErrorMessage, Field, Formik } from "formik";
 import * as Yup from "yup";
 import toast from 'react-hot-toast';
 
-import { useAppDispatch, useAppSelector } from "../../../../store";
-import { setAnimations } from "../../../../store/slices/projectSlice";
+import { getFile, useAppDispatch, useAppSelector } from "../../../../store";
+import { setAnimations, setFilesID } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
 
 import {poseTransfer} from "../../../../utils/callHuggingface";
@@ -36,8 +36,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
   };
   
 
-  const { characters } = useAppSelector((state) => state.projectState);
-  const { animations } = useAppSelector((state) => state.projectState);
+  const { characters, animations, fps, filesID, resolution } = useAppSelector((state) => state.projectState);
   const dispatch = useAppDispatch();
   
   const modalStyle = {
@@ -53,7 +52,41 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
 
   }, [characters]);
   
-  
+  const saveMediaFile = async (file, i, updatedFiles) => {
+    const fileId = crypto.randomUUID();
+    await storeFile(file, fileId);
+    
+    updatedFiles.push(fileId);
+    //console.log('save media file');
+    //console.log(updatedFiles);
+    
+    
+    
+    const img = {
+        id: fileId,
+        fileName: file.name,
+        fileId: fileId,
+        startTime: 0,
+        endTime: 1/fps,
+        src: URL.createObjectURL(file),
+        positionStart: i/fps,
+        positionEnd: (i+1)/fps,
+        includeInMerge: true,
+        x: 0,
+        y: 0,
+        width: resolution.width,
+        height: resolution.height,
+        rotation: 0,
+        opacity: 100,
+        crop: { x: 0, y: 0, width: resolution.width, height: resolution.height },
+        playbackSpeed: 1,
+        volume: 100,
+        type: 'frame',
+        zIndex: 0,
+    };
+    
+    return img;
+  };
   
   //getFileFromUrl("https://acmyu-keyframesai.hf.space/gradio_api/file=/tmp/gradio/6ec812eefefdcb1da6c9cb9f728b6954750506d22f771de050d322371e14ee50/image.png", "t.png");
 
@@ -88,7 +121,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         
         try {
           const ch = characters.find((c) => c.id == charId);
-          const [frames, thumbnails] = await poseTransfer(result, ch.images, ch.modelId);
+          const [frames, thumbnails] = await poseTransfer(result, ch.images, ch.modelId, resolution);
           
           var frames_zipped = frames.map(function(e, i) {
             return [e, thumbnails[i]];
@@ -99,20 +132,24 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
               id: crypto.randomUUID(),
               name: ch.name,
               frames: [],
-              fps: 12,
               order: 0,
               startTime: 0,
               character: charId,
           };
           
           var c = 0;
+          const updatedFiles = [...filesID || []];
           for (const f of frames_zipped) {
-          
+              const img = await saveMediaFile(f[0], c, updatedFiles);
+              const thumb = await saveMediaFile(f[1], c, updatedFiles);
+              
+              const frameId = crypto.randomUUID();
+              
               const newFrame = {
-                  id: crypto.randomUUID(),
+                  id: frameId,
                   order: c,
-                  image: f[0],
-                  thumbnail: f[1],
+                  image: img,
+                  thumbnail: thumb,
                   isKeyframe: true,
               };
               
@@ -123,6 +160,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           
           updatedAnimations.push(newAnimation);
           dispatch(setAnimations(updatedAnimations));
+          dispatch(setFilesID(updatedFiles));
           
           
           toast.success('Animation added successfully.', { id: toast_id });

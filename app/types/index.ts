@@ -1,4 +1,4 @@
-export type MediaType = 'video' | 'audio' | 'image' | 'unknown';
+export type MediaType = 'video' | 'audio' | 'image' | 'frame' | 'unknown';
 
 export type CharacterType = 'humanoid' | 'animal' | 'other';
 
@@ -35,6 +35,7 @@ export interface MediaFile {
 
     // Effects
     crop?: { x: number; y: number; width: number; height: number };
+    file?: File;
 }
 
 
@@ -54,8 +55,8 @@ export interface Pose {
 export interface Frame {
     id: string;
     order: number;
-    image: File;
-    thumbnail: File;
+    image: MediaFile;
+    thumbnail: MediaFile;
     isKeyframe: boolean;
     pose?: Pose;
 }
@@ -64,7 +65,6 @@ export interface Animation {
     id: string;
     name: string;
     frames: Frame[];
-    fps: number;
     order: number;
     startTime: number;
     character?: string;
@@ -142,6 +142,7 @@ export interface ProjectState {
     activeElement: ActiveElement | null;
     activeElementIndex: number;
     activeAnimationIndex: number;
+    activeFrameIndex: number;
     
 
     resolution: { width: number; height: number };

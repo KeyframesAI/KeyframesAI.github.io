@@ -7,7 +7,7 @@ import { setCurrentTime, setMediaFiles } from "@/app/store/slices/projectSlice";
 
 const Composition = () => {
     const projectState = useAppSelector((state) => state.projectState);
-    const { mediaFiles, textElements } = projectState;
+    const { animations, mediaFiles, textElements, fps } = projectState;
     const frame = useCurrentFrame();
     const dispatch = useAppDispatch();
 
@@ -23,10 +23,35 @@ const Composition = () => {
         }
 
     }, [frame, dispatch]);
-
-    const fps = 30;
+    
+    //console.log(animations);
+    
     return (
         <>
+            
+        
+             {animations
+              .map((ani) => {
+                return ani.frames
+                  .map((fr) => {
+                      const item = fr.thumbnail;
+                      
+                      if (!item) return;
+                      const trackItem = {
+                          ...item,
+                      } as MediaFile;
+                      
+                      return SequenceItem[trackItem.type](trackItem, {
+                          fps
+                      });
+                  })
+            
+              })
+            }
+        
+        
+        
+        
             {mediaFiles
                 .map((item: MediaFile) => {
                     if (!item) return;
