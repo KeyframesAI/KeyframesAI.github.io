@@ -42,9 +42,9 @@ async function getFrames(data){
 
 export const finetuneModel = async (images: File[], modelId: string) => {
 
-  
+  console.log("finetuneModel");
   const hgToken = process.env.NEXT_PUBLIC_HG_TOKEN;
-  console.log(hgToken);
+  //console.log(hgToken);
   
   
   const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
@@ -80,9 +80,9 @@ export const poseTransfer = async (video: File, images: File[], modelId: string,
   const img = await getFileFromUrl('https://tmpfiles.org/dl/9447583/41976c0d-67b0-42cc-8179-03a72f55dfac.png', 'test.png');
   frames.push(img);*/
 
-  
+  console.log("poseTransfer");
   const hgToken = process.env.NEXT_PUBLIC_HG_TOKEN;
-  console.log(hgToken);
+  //console.log(hgToken);
   
   
   const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
@@ -102,6 +102,7 @@ export const poseTransfer = async (video: File, images: File[], modelId: string,
       modelId: modelId, 
       img_width: resolution.width,
       img_height: resolution.height,
+      resize_inputs: false,
   });
 
   console.log("done pose transfer");
@@ -111,11 +112,15 @@ export const poseTransfer = async (video: File, images: File[], modelId: string,
   const frames = await getFrames(result.data[1]);
   const thumbnails = await getFrames(result.data[2]);
   
+  const coords = result.data[3]
+  const reference = await getFrames(result.data[4]);
+  
   
   console.log(frames);
   console.log(thumbnails)
+  console.log(coords)
 
-  return [frames, thumbnails];
+  return [frames, thumbnails, coords, reference];
 };
 
 

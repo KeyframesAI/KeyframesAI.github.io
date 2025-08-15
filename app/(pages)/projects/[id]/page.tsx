@@ -17,6 +17,7 @@ import HomeButton from "@/app/components/editor/AssetsPanel/SidebarButtons/HomeB
 import ShortcutsButton from "@/app/components/editor/AssetsPanel/SidebarButtons/ShortcutsButton";
 import MediaProperties from "../../../components/editor/PropertiesSection/MediaProperties";
 import TextProperties from "../../../components/editor/PropertiesSection/TextProperties";
+import FrameProperties from "../../../components/editor/PropertiesSection/FrameProperties";
 import { Timeline } from "../../../components/editor/timeline/Timline";
 import { PreviewPlayer } from "../../../components/editor/player/remotion/Player";
 import { MediaFile, Animation } from "@/app/types";
@@ -25,6 +26,11 @@ import Image from "next/image";
 import ProjectName from "../../../components/editor/player/ProjectName";
 
 import AddCharacter from '../../../components/editor/AssetsPanel/Character/AddCharacter';
+
+import { Scatter } from "react-chartjs-2";
+import "chartjs-plugin-dragdata";
+import "chart.js/auto";
+
 
 export default function Project({ params }: { params: { id: string } }) {
     const { id } = params;
@@ -79,7 +85,13 @@ export default function Project({ params }: { params: { id: string } }) {
                                   const thumb = await getFile(frame.thumbnail.fileId);
                                   const thumbnail = { ...frame.thumbnail, src: URL.createObjectURL(thumb) };
                                   
-                                  return { ...frame, image: image, thumbnail: thumbnail };
+                                  const ref_img = await getFile(frame.reference.fileId);
+                                  const reference = { ...frame.reference, src: URL.createObjectURL(ref_img) };
+                                  
+                                  
+                                  
+                                  
+                                  return { ...frame, image: image, thumbnail: thumbnail, reference: reference };
                               })
                           );
                           return { ...ani, frames: frames };
@@ -107,6 +119,70 @@ export default function Project({ params }: { params: { id: string } }) {
     const handleFocus = (section: "character" | "media" | "text" | "export") => {
         dispatch(setActiveSection(section));
     };
+    
+    
+    
+    const data = {
+          datasets: [
+            {
+              label: 'Scatter Dataset',
+              data: [{ x: 10, y: 20 }, { x: 30, y: 40 }, { x: 50, y: 60 }],
+              backgroundColor: 'rgba(255, 99, 132, 1)',
+              lineColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 10,
+              showLine: true,
+              pointRadius: 10,
+              type: "bubble",
+            },
+            {
+              label: 'Hidden Dataset',
+              data: [{ x: 0, y: 0 }, { x: 100, y: 100 }],
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+              dragData: false,
+            },
+          ],
+        };
+
+        const config = {
+          
+          plugins: {
+            responsive: false,
+            dragData: {
+              dragX: true, // Enable dragging along the x-axis
+              dragY: true,
+              round: 0, // Round dragged values to whole numbers
+              // Add callbacks for onDragStart, onDrag, onDragEnd as needed
+              onDragEnd: function(e, datasetIndex, index, value) {
+                // Handle data update after drag ends
+                console.log('Dragged value:', value);
+              }
+            },
+            legend: {
+              display: false
+            },
+            zoom: {
+              zoom: {
+                drag: {
+                  enabled: false,
+                  threshold: 801, // set threshold as described in docs: https://www.chartjs.org/chartjs-plugin-zoom/latest/guide/options.html#drag-options
+                },
+                mode: 'x',
+              }
+            }
+          },
+          animation: false,
+          scales: {
+            
+              x: {
+                  display: false,
+              },
+              y: {
+                  display: false
+              }
+          },
+        };
+        
+        
 
     return (
         <div className="flex flex-col h-screen select-none">
@@ -164,6 +240,8 @@ export default function Project({ params }: { params: { id: string } }) {
                 <div className="flex items-center justify-center flex-col flex-[1] overflow-hidden">
                     <ProjectName />
                     <PreviewPlayer />
+                    
+                    
                 </div>
 
                 {/* Right Sidebar - Element Properties */}
@@ -178,6 +256,11 @@ export default function Project({ params }: { params: { id: string } }) {
                         <div>
                             <h2 className="text-lg font-semibold mb-4">Text Properties</h2>
                             <TextProperties />
+                        </div>
+                    )}
+                    {activeElement === "frame" && (
+                        <div>
+                            <FrameProperties />
                         </div>
                     )}
                 </div>

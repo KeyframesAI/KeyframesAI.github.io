@@ -68,8 +68,8 @@ export const SequenceItem: Record<
                 >
                     <div
                         style={{
-                            width: item.width || "100%",
-                            height: item.height || "auto",
+                            width: crop.width || "100%",
+                            height: crop.height || "auto",
                             position: "relative",
                             overflow: "hidden",
                             pointerEvents: "none",
@@ -80,8 +80,9 @@ export const SequenceItem: Record<
                                 pointerEvents: "none",
                                 top: -crop.y || 0,
                                 left: -crop.x || 0,
-                                width: item.width || "100%",
-                                height: item.height || "auto",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
                                 position: "absolute",
                                 zIndex: item.zIndex || 0,
                             }}
@@ -138,8 +139,8 @@ export const SequenceItem: Record<
                 >
                     <div
                         style={{
-                            width: item.width || "100%",
-                            height: item.height || "auto",
+                            width: crop.width || "100%",
+                            height: crop.height || "auto",
                             position: "relative",
                             overflow: "hidden",
                             pointerEvents: "none",
@@ -150,8 +151,8 @@ export const SequenceItem: Record<
                                 pointerEvents: "none",
                                 top: -crop.y || 0,
                                 left: -crop.x || 0,
-                                width: item.width || "100%",
-                                height: item.height || "auto",
+                                width: crop.width || "100%",
+                                height: crop.height || "auto",
                                 position: "absolute",
                                 zIndex: item.zIndex || 0,
                             }}

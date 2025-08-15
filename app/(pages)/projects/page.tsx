@@ -57,7 +57,7 @@ export default function Projects() {
             isMuted: false,
             duration: 0,
             activeSection: 'character',
-            activeElement: 'text',
+            activeElement: 'frame',
             activeElementIndex: 0,
             activeAnimationIndex: 0,
             activeFrameIndex: 0,

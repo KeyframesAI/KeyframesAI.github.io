@@ -47,10 +47,14 @@ export interface Character {
     modelId?: string;
 }
 
-
 export interface Pose {
     id: string;
+    body: number[][];
+    hand1: number[][];
+    hand2: number[][];
+    face: number[][];
 }
+
 
 export interface Frame {
     id: string;
@@ -59,6 +63,7 @@ export interface Frame {
     thumbnail: MediaFile;
     isKeyframe: boolean;
     pose?: Pose;
+    reference?: MediaFile;
 }
 
 export interface Animation {
@@ -68,6 +73,9 @@ export interface Animation {
     order: number;
     startTime: number;
     character?: string;
+    referenceOpacity: boolean;
+    showPose: boolean;
+    hidden: boolean;
 }
 
 

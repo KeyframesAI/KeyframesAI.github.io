@@ -20,6 +20,20 @@ interface CustomModalProps {
   contentLabel: string;
 }
 
+const zipArrays = (...arr) => Array.from({ length: Math.max(...arr.map(a => a.length)) }, (_, i) => arr.map(a => a[i]));
+
+const getImageDimensions = (url: string): Promise<{width: number, height: number}> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({
+      width: img.width,
+      height: img.height,
+    });
+    img.onerror = (error) => reject(error);
+    img.src = url;
+  });
+};
+
 const MotionVideoUploader: React.FC<CustomModalProps> = ({
   charId,
   isOpen,
@@ -60,7 +74,8 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
     //console.log('save media file');
     //console.log(updatedFiles);
     
-    
+    const url = URL.createObjectURL(file);
+    const {width, height} = await getImageDimensions(url);
     
     const img = {
         id: fileId,
@@ -68,14 +83,14 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         fileId: fileId,
         startTime: 0,
         endTime: 1/fps,
-        src: URL.createObjectURL(file),
+        src: url,
         positionStart: i/fps,
         positionEnd: (i+1)/fps,
         includeInMerge: true,
         x: 0,
         y: 0,
-        width: resolution.width,
-        height: resolution.height,
+        width: width,
+        height: height,
         rotation: 0,
         opacity: 100,
         crop: { x: 0, y: 0, width: resolution.width, height: resolution.height },
@@ -121,11 +136,13 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         
         try {
           const ch = characters.find((c) => c.id == charId);
-          const [frames, thumbnails] = await poseTransfer(result, ch.images, ch.modelId, resolution);
+          const [frames, thumbnails, coords, reference] = await poseTransfer(result, ch.images, ch.modelId, resolution);
           
-          var frames_zipped = frames.map(function(e, i) {
+          /*var frames_zipped = frames.map(function(e, i) {
             return [e, thumbnails[i]];
-          });
+          });*/
+          
+          const frames_zipped = zipArrays(frames, thumbnails, coords, reference);
         
           const updatedAnimations = [...animations || []];
           const newAnimation = {
@@ -135,15 +152,28 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
               order: 0,
               startTime: 0,
               character: charId,
+              referenceOpacity: 0,
+              showPose: false,
+              hidden: false,
           };
           
           var c = 0;
           const updatedFiles = [...filesID || []];
           for (const f of frames_zipped) {
+              const frameId = crypto.randomUUID();
+              
               const img = await saveMediaFile(f[0], c, updatedFiles);
               const thumb = await saveMediaFile(f[1], c, updatedFiles);
+              const ref_img = await saveMediaFile(f[3], c, updatedFiles);
               
-              const frameId = crypto.randomUUID();
+              const pose = JSON.parse(f[2]);
+              console.log(pose);
+              const newPose = {
+                  id: frameId,
+                  body: pose["bodies"][0],
+                  hand1: pose["hands"][0],
+                  hand2: pose["hands"][1],
+              }
               
               const newFrame = {
                   id: frameId,
@@ -151,6 +181,8 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                   image: img,
                   thumbnail: thumb,
                   isKeyframe: true,
+                  pose: newPose,
+                  reference: ref_img,
               };
               
               newAnimation.frames.push(newFrame);
@@ -164,6 +196,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           
           
           toast.success('Animation added successfully.', { id: toast_id });
+          console.log(updatedAnimations);
         
         } catch(err) {
           toast.error('Error generating the animation', { id: toast_id });

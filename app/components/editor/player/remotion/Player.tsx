@@ -6,7 +6,6 @@ import { setIsPlaying } from "@/app/store/slices/projectSlice";
 import { useDispatch } from "react-redux";
 
 
-
 export const PreviewPlayer = () => {
     const projectState = useAppSelector((state) => state.projectState);
     const { duration, currentTime, isPlaying, isMuted, fps } = projectState;
@@ -59,6 +58,10 @@ export const PreviewPlayer = () => {
     }, [isMuted]);
     
     //console.log(duration, fps);
+    
+    
+        
+        
 
     return (
         <Player
@@ -70,6 +73,7 @@ export const PreviewPlayer = () => {
             compositionHeight={1080}
             fps={fps}
             style={{ width: "100%", height: "100%" }}
+            clickToPlay={false}
             controls
         />
     )
