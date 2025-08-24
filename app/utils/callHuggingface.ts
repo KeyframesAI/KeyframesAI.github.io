@@ -2,6 +2,7 @@
 
 //import React from "react";
 import { Client, handle_file } from "@gradio/client";
+import { storeFile } from "../store";
 
 /*
 const https = require('https'); // Use https for secure URLs
@@ -39,6 +40,57 @@ async function getFrames(data){
   }
   return frames;
 }
+
+const getImageDimensions = (url: string): Promise<{width: number, height: number}> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({
+      width: img.width,
+      height: img.height,
+    });
+    img.onerror = (error) => reject(error);
+    img.src = url;
+  });
+};
+
+export const saveMediaFile = async (file, i, updatedFiles, fps, resolution) => {
+    const fileId = crypto.randomUUID();
+    await storeFile(file, fileId);
+    
+    updatedFiles.push(fileId);
+    //console.log('save media file');
+    //console.log(updatedFiles);
+    
+    const url = URL.createObjectURL(file);
+    const {width, height} = await getImageDimensions(url);
+    
+    const img = {
+        id: fileId,
+        fileName: file.name,
+        fileId: fileId,
+        startTime: 0,
+        endTime: 1/fps,
+        src: url,
+        positionStart: i/fps,
+        positionEnd: (i+1)/fps,
+        includeInMerge: true,
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        rotation: 0,
+        opacity: 100,
+        crop: { x: 0, y: 0, width: resolution.width, height: resolution.height },
+        playbackSpeed: 1,
+        volume: 100,
+        type: 'frame',
+        zIndex: 0,
+    };
+    
+    return img;
+};
+
+
 
 export const finetuneModel = async (images: File[], modelId: string) => {
 
@@ -121,6 +173,49 @@ export const poseTransfer = async (video: File, images: File[], modelId: string,
   console.log(coords)
 
   return [frames, thumbnails, coords, reference];
+};
+
+
+export const generateFrame = async (poses: string, images: File[], modelId: string, width, height) => {
+  /*var frames = [];
+  const img = await getFileFromUrl('https://tmpfiles.org/dl/9447583/41976c0d-67b0-42cc-8179-03a72f55dfac.png', 'test.png');
+  frames.push(img);*/
+
+  console.log("generateFrame");
+  const hgToken = process.env.NEXT_PUBLIC_HG_TOKEN;
+  //console.log(hgToken);
+  
+  
+  const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  
+  
+  const imgs = []
+  images.forEach((img) => {
+      imgs.push({"image":handle_file(img.file),"caption":""});
+  });
+  
+  const result = await app.predict("/run_generate_frame", { 		
+      images: imgs,
+      target_poses: poses,
+      train_steps: train_steps, 
+      inference_steps: 10, 		
+      modelId: modelId, 
+      img_width: width,
+      img_height: height,
+      resize_inputs: false,
+  });
+
+  console.log("done generateFrame");
+  console.log(result);
+
+  
+  const frames = await getFrames(result.data[0]);
+  const thumbnails = await getFrames(result.data[1]);
+
+  //console.log(frames);
+  //console.log(thumbnails)
+
+  return [frames, thumbnails];
 };
 
 

@@ -73,7 +73,7 @@ export interface Animation {
     order: number;
     startTime: number;
     character?: string;
-    referenceOpacity: boolean;
+    referenceOpacity: number;
     showPose: boolean;
     hidden: boolean;
 }

@@ -1,21 +1,24 @@
 "use client";
 
 import { useAppSelector, deleteFile } from '../../../store';
-import { setActiveAnimationIndex, setActiveFrameIndex, setAnimations } from '../../../store/slices/projectSlice';
+import { setActiveAnimationIndex, setActiveFrameIndex, setAnimations, setFilesID } from '../../../store/slices/projectSlice';
 import { MediaFile } from '../../../types';
 import { useAppDispatch } from '../../../store';
 
 import Image from 'next/image';
 import ToggleSwitch from "./components/ToggleSwitch";
+import toast from 'react-hot-toast';
 
 
 import { Scatter } from "react-chartjs-2";
 import "chartjs-plugin-dragdata";
 import "chart.js/auto";
 
+import {generateFrame, saveMediaFile} from "../../../utils/callHuggingface";
+
 
 export default function FrameProperties() {
-    const { activeAnimationIndex, activeFrameIndex, animations } = useAppSelector((state) => state.projectState);
+    const { activeAnimationIndex, activeFrameIndex, animations, characters, fps, filesID, resolution } = useAppSelector((state) => state.projectState);
     const animation = animations[activeAnimationIndex];
     if (!animation) return null;
     const frame = animation.frames[activeFrameIndex];
@@ -60,6 +63,44 @@ export default function FrameProperties() {
           dispatch(setAnimations(updated));
         }
         console.log(animations);
+    };
+    
+    
+    const onGenerateFrame = async () => {
+        const toast_id = toast.loading('Generating frames...');
+        
+        try {
+          const character = characters.find(char => char.id === animation.character);
+          
+          const pose = {
+              bodies: frame.pose.body, 
+              body_scores: [frame.pose.body.map((coord, index) => index)], 
+              hands: [frame.pose.hand1, frame.pose.hand2], 
+              hands_scores: [frame.pose.hand1.map(coord => 1.0), frame.pose.hand2.map(coord => 1.0)],
+              faces: [],
+              faces_scores: [],
+          };
+          /*
+          body: pose["bodies"][0],
+          hand1: pose["hands"][0],
+          hand2: pose["hands"][1],
+          */
+          
+          const [frames, thumbnails] = await generateFrame(JSON.stringify([pose]), character.images, character.modelId, frame.image.crop.width, frame.image.crop.height);
+          //console.log(frames)
+          
+          const updatedFiles = [...filesID || []];
+          const img = await saveMediaFile(frames[0], activeFrameIndex, updatedFiles, fps, resolution);
+          const thumb = await saveMediaFile(thumbnails[0], activeFrameIndex, updatedFiles, fps, resolution);
+          
+          dispatch(setFilesID(updatedFiles));
+          onUpdateFrame(frame.id, {image: img, thumbnail: thumb});
+          
+          toast.success('Frames generated successfully.', { id: toast_id });
+        } catch(err) {
+          toast.error('Error generating the animation', { id: toast_id });
+          throw err;
+        }
     };
     
 
@@ -114,7 +155,7 @@ export default function FrameProperties() {
     
     
     
-    
+    //console.log(animation);
     
     
 
@@ -123,10 +164,26 @@ export default function FrameProperties() {
         
             <div className="grid grid-cols-1 gap-8">
                 
+                {/* Generate Frame */}
+                <div className="space-y-2">
+                    <label
+                        onClick={() => onGenerateFrame()}
+                        className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                    >
+                        <Image
+                            alt="Add Project"
+                            className="Black"
+                            height={24}
+                            width={24}
+                            src="https://www.svgrepo.com/show/506366/wand.svg"
+                        />
+                        <span className="text-sm">Generate Frame</span>
+                    </label>
                 
+                    
+                </div>
             
                 <div className="space-y-6">
-                    <h2 className="text-lg font-semibold mb-4">Layer Properties</h2>
                     <div className="grid grid-cols-1 gap-8">
                         
                         
@@ -155,7 +212,7 @@ export default function FrameProperties() {
                                 type="range"
                                 min="0"
                                 max="100"
-                                value={frame.referenceOpacity}
+                                value={animation.referenceOpacity}
                                 onChange={(e) => onUpdateAnimation(animation.id, { referenceOpacity: Number(e.target.value) })}
                                 className="w-full bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:border-white-500"
                             />
@@ -199,7 +256,6 @@ export default function FrameProperties() {
                 
                 
                 <div className="space-y-6">
-                    <h2 className="text-lg font-semibold mb-4">Frame Properties</h2>
                     <div className="grid grid-cols-1 gap-8">
                         <Scatter 
                             data={data} 

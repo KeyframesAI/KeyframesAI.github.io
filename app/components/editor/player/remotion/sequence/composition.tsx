@@ -4,22 +4,27 @@ import { PoseSequenceItem } from "./pose-sequence-item";
 import { MediaFile, TextElement } from "@/app/types";
 import { useCurrentFrame, useVideoConfig } from 'remotion';
 import { use, useCallback, useEffect, useRef, useState } from "react";
-import { setCurrentTime, setMediaFiles } from "@/app/store/slices/projectSlice";
+import { setCurrentTime, setMediaFiles, setActiveFrameIndex } from "@/app/store/slices/projectSlice";
 
 const Composition = () => {
     const projectState = useAppSelector((state) => state.projectState);
-    const { animations, mediaFiles, textElements, fps, activeAnimationIndex } = projectState;
+    const { animations, mediaFiles, textElements, fps, activeAnimationIndex, isPlaying } = projectState;
     const frame = useCurrentFrame();
     const dispatch = useAppDispatch();
 
-    const THRESHOLD = 0.1; // Minimum change to trigger dispatch (in seconds)
+    const THRESHOLD = 1/fps; // Minimum change to trigger dispatch (in seconds)
     const previousTime = useRef(0); // Store previous time to track changes
 
     useEffect(() => {
         const currentTimeInSeconds = frame / fps;
         if (Math.abs(currentTimeInSeconds - previousTime.current) > THRESHOLD) {
             if (currentTimeInSeconds !== undefined) {
+                //console.log(frame, currentTimeInSeconds, previousTime.current);
                 dispatch(setCurrentTime(currentTimeInSeconds));
+                //console.log(animations);
+                if (animations.length>0 && frame < animations[activeAnimationIndex].frames.length) {
+                  dispatch(setActiveFrameIndex(frame));
+                }
             }
         }
 
@@ -43,7 +48,7 @@ const Composition = () => {
     };
     
     
-    const getPoseSequenceItem = (frame) => {
+    const getPoseSequenceItem = (frame, index) => {
         const item = frame.reference;
         
         if (!item) return;
@@ -55,6 +60,9 @@ const Composition = () => {
         return PoseSequenceItem[trackItem.type](trackItem, {
             fps: fps, 
             pose_raw: frame.pose.body,
+            animations: animations,
+            activeAnimationIndex: activeAnimationIndex,
+            frame_index: index,
         });
       
     };
@@ -63,11 +71,11 @@ const Composition = () => {
         <>
             {animations
               .map((ani) => {
-                if (animations[activeAnimationIndex].id == ani.id && ani.showPose && !ani.hidden) {
+                if (animations[activeAnimationIndex].id == ani.id && ani.showPose) {
                   return ani.frames
-                    .map((fr) => {
+                    .map((fr, index) => {
                       if (fr.pose) {
-                        return getPoseSequenceItem(fr);
+                        return getPoseSequenceItem(fr, index);
                       }
                     })
                 }

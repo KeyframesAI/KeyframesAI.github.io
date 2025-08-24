@@ -8,7 +8,7 @@ import { getFile, useAppDispatch, useAppSelector } from "../../../../store";
 import { setAnimations, setFilesID } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
 
-import {poseTransfer} from "../../../../utils/callHuggingface";
+import {poseTransfer, saveMediaFile} from "../../../../utils/callHuggingface";
 
 interface CustomModalProps {
   isOpen: boolean;
@@ -22,17 +22,7 @@ interface CustomModalProps {
 
 const zipArrays = (...arr) => Array.from({ length: Math.max(...arr.map(a => a.length)) }, (_, i) => arr.map(a => a[i]));
 
-const getImageDimensions = (url: string): Promise<{width: number, height: number}> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve({
-      width: img.width,
-      height: img.height,
-    });
-    img.onerror = (error) => reject(error);
-    img.src = url;
-  });
-};
+
 
 const MotionVideoUploader: React.FC<CustomModalProps> = ({
   charId,
@@ -66,42 +56,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
 
   }, [characters]);
   
-  const saveMediaFile = async (file, i, updatedFiles) => {
-    const fileId = crypto.randomUUID();
-    await storeFile(file, fileId);
-    
-    updatedFiles.push(fileId);
-    //console.log('save media file');
-    //console.log(updatedFiles);
-    
-    const url = URL.createObjectURL(file);
-    const {width, height} = await getImageDimensions(url);
-    
-    const img = {
-        id: fileId,
-        fileName: file.name,
-        fileId: fileId,
-        startTime: 0,
-        endTime: 1/fps,
-        src: url,
-        positionStart: i/fps,
-        positionEnd: (i+1)/fps,
-        includeInMerge: true,
-        x: 0,
-        y: 0,
-        width: width,
-        height: height,
-        rotation: 0,
-        opacity: 100,
-        crop: { x: 0, y: 0, width: resolution.width, height: resolution.height },
-        playbackSpeed: 1,
-        volume: 100,
-        type: 'frame',
-        zIndex: 0,
-    };
-    
-    return img;
-  };
+  
   
   //getFileFromUrl("https://acmyu-keyframesai.hf.space/gradio_api/file=/tmp/gradio/6ec812eefefdcb1da6c9cb9f728b6954750506d22f771de050d322371e14ee50/image.png", "t.png");
 
@@ -162,9 +117,9 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           for (const f of frames_zipped) {
               const frameId = crypto.randomUUID();
               
-              const img = await saveMediaFile(f[0], c, updatedFiles);
-              const thumb = await saveMediaFile(f[1], c, updatedFiles);
-              const ref_img = await saveMediaFile(f[3], c, updatedFiles);
+              const img = await saveMediaFile(f[0], c, updatedFiles, fps, resolution);
+              const thumb = await saveMediaFile(f[1], c, updatedFiles, fps, resolution);
+              const ref_img = await saveMediaFile(f[3], c, updatedFiles, fps, resolution);
               
               const pose = JSON.parse(f[2]);
               console.log(pose);

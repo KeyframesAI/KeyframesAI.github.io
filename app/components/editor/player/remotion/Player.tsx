@@ -2,7 +2,7 @@ import { Player, PlayerRef } from "@remotion/player";
 import Composition from "./sequence/composition";
 import { useAppSelector, useAppDispatch } from "@/app/store";
 import { useRef, useState, useEffect } from "react";
-import { setIsPlaying } from "@/app/store/slices/projectSlice";
+import { setIsPlaying, setCurrentTime } from "@/app/store/slices/projectSlice";
 import { useDispatch } from "react-redux";
 
 
@@ -15,6 +15,7 @@ export const PreviewPlayer = () => {
     // update frame when current time with marker
     useEffect(() => {
         const frame = Math.round(currentTime * fps);
+        //console.log(currentTime, frame);
         if (playerRef.current && !isPlaying) {
             playerRef.current.pause();
             playerRef.current.seekTo(frame);
@@ -28,12 +29,18 @@ export const PreviewPlayer = () => {
         playerRef?.current?.addEventListener("pause", () => {
             dispatch(setIsPlaying(false));
         });
+        playerRef?.current?.addEventListener("ended", () => {
+            dispatch(setCurrentTime(0));
+        });
         return () => {
             playerRef?.current?.removeEventListener("play", () => {
                 dispatch(setIsPlaying(true));
             });
             playerRef?.current?.removeEventListener("pause", () => {
                 dispatch(setIsPlaying(false));
+            });
+            playerRef?.current?.removeEventListener("ended", () => {
+                dispatch(setCurrentTime(0));
             });
         };
     }, [playerRef]);
@@ -58,10 +65,6 @@ export const PreviewPlayer = () => {
     }, [isMuted]);
     
     //console.log(duration, fps);
-    
-    
-        
-        
 
     return (
         <Player

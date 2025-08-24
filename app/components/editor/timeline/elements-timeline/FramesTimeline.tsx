@@ -55,10 +55,6 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
             dispatch(setMediaFiles(updated));
         }, 100), [dispatch]
     );
-    
-    
-    
-      
 
     const handleClick = (aniIndex: number, index: number | string) => {
         //appDispatch(setActiveElement('frame'));
