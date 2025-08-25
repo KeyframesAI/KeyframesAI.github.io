@@ -69,6 +69,7 @@ const Composition = () => {
       
     return (
         <>
+            {/* pose */}
             {animations
               .map((ani) => {
                 if (animations[activeAnimationIndex].id == ani.id && ani.showPose) {
@@ -83,6 +84,7 @@ const Composition = () => {
             }
             
         
+            {/* frame */}
             {animations
               .map((ani) => {
                 if (!ani.hidden) {
@@ -94,6 +96,30 @@ const Composition = () => {
               })
             }
             
+            {/* onion skinning */}
+            {animations
+              .map((ani) => {
+                if (!ani.hidden) {
+                    var items = [];
+                    for (const [index, frame] of ani.frames.entries()) {
+                      for (var layer=(-1*ani.onionSkinning); layer<=ani.onionSkinning; layer++) {
+                        const i = index+layer;
+                        if (layer==0 || i<0 || i>=ani.frames.length) {
+                          continue;
+                        }
+                        const fr = {...ani.frames[i].thumbnail, id:crypto.randomUUID(), positionStart: frame.thumbnail.positionStart, positionEnd: frame.thumbnail.positionEnd};
+                        const opacity = (1.0 - Math.abs(layer) / (ani.onionSkinning+1)) / 2.0;
+                        //console.log(opacity);
+                        
+                        items.push(getFrameSequenceItem(fr, frame.thumbnail.opacity * opacity));
+                      }
+                    }
+                    return items;
+                }
+              })
+            }
+            
+            {/* reference */}
             {animations
               .map((ani) => {
                 if (animations[activeAnimationIndex].id == ani.id && ani.referenceOpacity>0 && !ani.hidden) {

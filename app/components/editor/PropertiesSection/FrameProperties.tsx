@@ -207,6 +207,18 @@ export default function FrameProperties() {
                         </div>
                         
                         <div>
+                            <label className="block text-sm">Onion Skinning</label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="5"
+                                value={animation.onionSkinning}
+                                onChange={(e) => onUpdateAnimation(animation.id, { onionSkinning: Number(e.target.value) })}
+                                className="w-full bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:border-white-500"
+                            />
+                        </div>
+                        
+                        <div>
                             <label className="block text-sm">Reference Frame Opacity</label>
                             <input
                                 type="range"

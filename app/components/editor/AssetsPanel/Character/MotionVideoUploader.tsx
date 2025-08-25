@@ -108,6 +108,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
               startTime: 0,
               character: charId,
               referenceOpacity: 0,
+              onionSkinning: 0,
               showPose: false,
               hidden: false,
           };

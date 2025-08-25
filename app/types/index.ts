@@ -76,6 +76,7 @@ export interface Animation {
     referenceOpacity: number;
     showPose: boolean;
     hidden: boolean;
+    onionSkinning: number;
 }
 
 
