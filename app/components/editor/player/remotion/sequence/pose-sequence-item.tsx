@@ -9,7 +9,7 @@ import "chart.js/auto";
 
 const REMOTION_SAFE_FRAME = 0;
 
-const dispatch = useAppDispatch();
+
 
 interface SequenceItemOptions {
     handleTextChange?: (id: string, text: string) => void;
@@ -123,6 +123,8 @@ const createDatasets = (pose, color) => {
 export const PoseSequenceItem: Record<
     string,
     (item: any, options: SequenceItemOptions) => JSX.Element> = {
+    
+    const dispatch = useAppDispatch();
     
     frame: (item: MediaFile, options: SequenceItemOptions) => {
         const { fps, order, pose_raw, animations, activeAnimationIndex, frame_index } = options;
