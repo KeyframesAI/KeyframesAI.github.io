@@ -1,7 +1,7 @@
 'use client';
 import { useAppSelector } from "@/app/store";
 import { useEffect, useRef, useState } from "react";
-import { setIsPlaying, setIsMuted, setCurrentTime, setMarkerTrack } from "@/app/store/slices/projectSlice";
+import { setIsPlaying, setIsMuted, setCurrentTime, setMarkerTrack, setActiveFrameIndex } from "@/app/store/slices/projectSlice";
 import { useDispatch } from "react-redux";
 
 interface GlobalKeyHandlerProps {
@@ -14,7 +14,7 @@ const GlobalKeyHandler = ({ handleDuplicate, handleSplit, handleDelete }: Global
     const projectState = useAppSelector((state) => state.projectState);
     const dispatch = useDispatch();
 
-    const { duration } = projectState;
+    const { duration, fps, activeFrameIndex } = projectState;
 
     // Store latest state values in refs
     const isPlayingRef = useRef(projectState.isPlaying);
@@ -48,6 +48,8 @@ const GlobalKeyHandler = ({ handleDuplicate, handleSplit, handleDelete }: Global
                 target.isContentEditable;
 
             if (isTyping) return;
+            
+            const shift = 1/fps; //.01;
 
             switch (e.code) {
                 case 'Space':
@@ -77,13 +79,13 @@ const GlobalKeyHandler = ({ handleDuplicate, handleSplit, handleDelete }: Global
                 case 'ArrowRight':
                     e.preventDefault();
                     if (isPlayingRef.current) return;
-                    const nextTime = currentTimeRef.current + .01 > duration ? 0 : currentTimeRef.current + .01;
+                    const nextTime = currentTimeRef.current + shift > duration ? 0 : currentTimeRef.current + shift;
                     dispatch(setCurrentTime(nextTime));
                     break;
                 case 'ArrowLeft':
                     e.preventDefault();
                     if (isPlayingRef.current) return;
-                    const prevTime = currentTimeRef.current - .01 > duration ? 0 : currentTimeRef.current - .01;
+                    const prevTime = currentTimeRef.current - shift < 0 ? 0 : currentTimeRef.current - shift;
                     dispatch(setCurrentTime(prevTime));
                     break;
                 default:

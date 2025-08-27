@@ -50,7 +50,10 @@ const calculateTotalDuration = (
 const calculateAnimationDuration = (
     animations: Animation[],
 ): number => {
-    const durations = animations.map(v => v.frames.length);
+    //const durations = animations.map(v => v.frames.length);
+    const durations = animations.map(v => Math.max(...v.frames.map(f => f.order))+1);
+    
+    //Math.max(...animations.map(ani => ani.frames.map(fr => fr.order)));
     
     return Math.max(0, ...durations);
 };

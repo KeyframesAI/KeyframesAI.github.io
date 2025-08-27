@@ -127,7 +127,7 @@ export const finetuneModel = async (images: File[], modelId: string) => {
 
 
 
-export const poseTransfer = async (video: File, images: File[], modelId: string, resolution) => {
+export const poseTransfer = async (video: File, refFrames: File[], images: File[], modelId: string, resolution) => {
   /*var frames = [];
   const img = await getFileFromUrl('https://tmpfiles.org/dl/9447583/41976c0d-67b0-42cc-8179-03a72f55dfac.png', 'test.png');
   frames.push(img);*/
@@ -140,14 +140,31 @@ export const poseTransfer = async (video: File, images: File[], modelId: string,
   const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
   
   
-  const imgs = []
+  const imgs = [];
   images.forEach((img) => {
       imgs.push({"image":handle_file(img.file),"caption":""});
   });
   
+  console.log(video, refFrames);
+  
+  const fr = [];
+  if (refFrames) {
+    [...refFrames].forEach((img) => {
+        fr.push({"image":handle_file(img),"caption":""});
+    });
+  }
+  
+  var vid = null;
+  if (video) {
+    vid = {"video":handle_file(video)};
+  }
+  
+  console.log(vid, fr);
+  
   const result = await app.predict("/run_inference", { 		
       images: imgs,
-      video_path: {"video":handle_file(video.video)},
+      video_path: vid,
+      frames: fr,
       train_steps: train_steps, 
       inference_steps: 10, 		
       fps: 12,

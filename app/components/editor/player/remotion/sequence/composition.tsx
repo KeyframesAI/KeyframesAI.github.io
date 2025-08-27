@@ -8,7 +8,7 @@ import { setCurrentTime, setMediaFiles, setActiveFrameIndex } from "@/app/store/
 
 const Composition = () => {
     const projectState = useAppSelector((state) => state.projectState);
-    const { animations, mediaFiles, textElements, fps, activeAnimationIndex, isPlaying } = projectState;
+    const { animations, mediaFiles, textElements, fps, activeAnimationIndex, isPlaying, currentTime } = projectState;
     const frame = useCurrentFrame();
     const dispatch = useAppDispatch();
 
@@ -16,23 +16,26 @@ const Composition = () => {
     const previousTime = useRef(0); // Store previous time to track changes
 
     useEffect(() => {
-        const currentTimeInSeconds = frame / fps;
-        if (Math.abs(currentTimeInSeconds - previousTime.current) > THRESHOLD) {
-            if (currentTimeInSeconds !== undefined) {
-                //console.log(frame, currentTimeInSeconds, previousTime.current);
-                dispatch(setCurrentTime(currentTimeInSeconds));
-                //console.log(animations);
-                if (animations.length>0 && frame < animations[activeAnimationIndex].frames.length) {
-                  dispatch(setActiveFrameIndex(frame));
-                }
-            }
+        if (isPlaying) {
+          const currentTimeInSeconds = frame / fps;
+          if (Math.abs(currentTimeInSeconds - previousTime.current) > THRESHOLD) {
+              //console.log(currentTimeInSeconds, previousTime.current);
+              if (currentTimeInSeconds !== undefined) {
+                  //console.log(frame, currentTimeInSeconds, previousTime.current);
+                  dispatch(setCurrentTime(currentTimeInSeconds));
+                  //console.log(animations);
+                  //if (animations.length>0 && frame < animations[activeAnimationIndex].frames.length) {
+                  //  dispatch(setActiveFrameIndex(frame));
+                  //}
+              }
+          }
         }
 
     }, [frame, dispatch]);
     
     //console.log(animations);
     
-    const getFrameSequenceItem = (item, opacity=100) => {
+    const getFrameSequenceItem = (item, order, opacity=100) => {
     
         if (!item) return;
         const trackItem = {
@@ -42,14 +45,15 @@ const Composition = () => {
         
         
         return SequenceItem[trackItem.type](trackItem, {
-            fps
+            fps,
+            order,
         });
       
     };
     
     
-    const getPoseSequenceItem = (frame, index) => {
-        const item = frame.reference;
+    const getPoseSequenceItem = (f, index) => {
+        const item = f.reference;
         
         if (!item) return;
         const trackItem = {
@@ -59,7 +63,8 @@ const Composition = () => {
         
         return PoseSequenceItem[trackItem.type](trackItem, {
             fps: fps, 
-            pose_raw: frame.pose.body,
+            order: f.order,
+            pose_raw: f.pose.body,
             animations: animations,
             activeAnimationIndex: activeAnimationIndex,
             frame_index: index,
@@ -69,6 +74,60 @@ const Composition = () => {
       
     return (
         <>
+            
+            
+            
+            {/* onion skinning */}
+            {animations
+              .map((ani) => {
+                if (!ani.hidden && animations[activeAnimationIndex].id == ani.id) {
+                    var items = [];
+                    for (const [index, f] of ani.frames.entries()) {
+                      for (var layer=(-1*ani.onionSkinning); layer<=ani.onionSkinning; layer++) {
+                        const i = index+layer;
+                        if (layer==0 || i<0 || i>=ani.frames.length) {
+                          continue;
+                        }
+                        const fr = {...ani.frames[i].thumbnail, id:crypto.randomUUID(), positionStart: f.thumbnail.positionStart, positionEnd: f.thumbnail.positionEnd};
+                        const opacity = (1.0 - Math.abs(layer) / (ani.onionSkinning+1)) / 2.0;
+                        //console.log(opacity);
+                        
+                        items.push(getFrameSequenceItem(fr, f.order, f.thumbnail.opacity * opacity));
+                      }
+                    }
+                    return items;
+                }
+              })
+            }
+        
+            {/* frame */}
+            {animations
+              .map((ani) => {
+                if (!ani.hidden) {
+                    return ani.frames
+                      .map((fr) => {
+                          return getFrameSequenceItem(fr.thumbnail, fr.order, fr.thumbnail.opacity);
+                      })
+                }
+              })
+            }
+            
+            
+            
+            {/* reference */}
+            {animations
+              .map((ani) => {
+                if (animations[activeAnimationIndex].id == ani.id && ani.referenceOpacity>0 && !ani.hidden) {
+                  return ani.frames
+                    .map((fr) => {
+                        return getFrameSequenceItem(fr.reference, fr.order, ani.referenceOpacity);
+                    })
+                }
+              })
+            }
+            
+            
+            
             {/* pose */}
             {animations
               .map((ani) => {
@@ -82,56 +141,6 @@ const Composition = () => {
                 }
               })
             }
-            
-        
-            {/* frame */}
-            {animations
-              .map((ani) => {
-                if (!ani.hidden) {
-                    return ani.frames
-                      .map((fr) => {
-                          return getFrameSequenceItem(fr.thumbnail, fr.thumbnail.opacity);
-                      })
-                }
-              })
-            }
-            
-            {/* onion skinning */}
-            {animations
-              .map((ani) => {
-                if (!ani.hidden) {
-                    var items = [];
-                    for (const [index, frame] of ani.frames.entries()) {
-                      for (var layer=(-1*ani.onionSkinning); layer<=ani.onionSkinning; layer++) {
-                        const i = index+layer;
-                        if (layer==0 || i<0 || i>=ani.frames.length) {
-                          continue;
-                        }
-                        const fr = {...ani.frames[i].thumbnail, id:crypto.randomUUID(), positionStart: frame.thumbnail.positionStart, positionEnd: frame.thumbnail.positionEnd};
-                        const opacity = (1.0 - Math.abs(layer) / (ani.onionSkinning+1)) / 2.0;
-                        //console.log(opacity);
-                        
-                        items.push(getFrameSequenceItem(fr, frame.thumbnail.opacity * opacity));
-                      }
-                    }
-                    return items;
-                }
-              })
-            }
-            
-            {/* reference */}
-            {animations
-              .map((ani) => {
-                if (animations[activeAnimationIndex].id == ani.id && ani.referenceOpacity>0 && !ani.hidden) {
-                  return ani.frames
-                    .map((fr) => {
-                        return getFrameSequenceItem(fr.reference, ani.referenceOpacity);
-                    })
-                }
-              })
-            }
-            
-            
         
         
         

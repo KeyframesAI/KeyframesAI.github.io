@@ -32,15 +32,19 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
 }) => {
   // Ref for the file Input element.
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imgInputRef = useRef<HTMLInputElement>(null);
   
   
 
   const handleFileInputClick = () => {
     fileInputRef.current?.click();
   };
+  const handleImgInputClick = () => {
+    imgInputRef.current?.click();
+  };
   
 
-  const { characters, animations, fps, filesID, resolution } = useAppSelector((state) => state.projectState);
+  const { characters, animations, fps, filesID, resolution, activeAnimationIndex } = useAppSelector((state) => state.projectState);
   const dispatch = useAppDispatch();
   
   const modalStyle = {
@@ -57,31 +61,49 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
   }, [characters]);
   
   
+  const handleSave = (values) => {
+    // do what you want like on submit
+  }
+  
+  
   
   //getFileFromUrl("https://acmyu-keyframesai.hf.space/gradio_api/file=/tmp/gradio/6ec812eefefdcb1da6c9cb9f728b6954750506d22f771de050d322371e14ee50/image.png", "t.png");
 
   return (
+    < >
     <Formik
       initialValues={{
         video: (null as File | null),
+        images: (null as File | null),
+        addToAnimation: "new",
       }}
       // In summary, Yup is responsible for the schema-based validation, while Formik handles form management and state. Combining Yup with Formik provides a robust solution for building forms with client-side validation.
 
       validationSchema={Yup.object({
         video: Yup.mixed()
-          .required("Required")
-          .test("fileSize", "File size is too large", (value) => {
+          //.required("Required")
+          .nullable()
+          /*.test("fileSize", "File size is too large", (value) => {
             // Size less than or equal to 100,000,000 bytes (100MB).
             return Array.from(value).every(val => val instanceof File && val.size <= 100000000);
             
-          }),
+          })*/,
+        images: Yup.mixed().nullable(),
+        addToAnimation: Yup.mixed().nullable(),
       })}
       
       
       onSubmit =  {async (values, { setSubmitting, resetForm }) => {
         const result = { ...values };
-        // console.log(result); // The is the result object for the form.
+         console.log(result); // The is the result object for the form.
+         //return;
         setSubmitting(false);
+        
+        var aniIndex = -1;
+        if (result.addToAnimation == "selected" && animations.length>0) {
+          aniIndex = activeAnimationIndex;
+        }
+        
         
         const toast_id = toast.loading('Generating animation...');
         
@@ -91,7 +113,29 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         
         try {
           const ch = characters.find((c) => c.id == charId);
-          const [frames, thumbnails, coords, reference] = await poseTransfer(result, ch.images, ch.modelId, resolution);
+          
+          const [frames, thumbnails, coords, reference] = await poseTransfer(result.video, result.images, ch.images, ch.modelId, resolution);
+          
+          const updatedAnimations = [...animations || []];
+          var newAnimation = null;
+          if (aniIndex == -1) {
+              newAnimation = {
+                  id: crypto.randomUUID(),
+                  name: ch.name,
+                  frames: [],
+                  order: 0,
+                  startTime: 0,
+                  character: charId,
+                  referenceOpacity: 0,
+                  onionSkinning: 0,
+                  showPose: false,
+                  hidden: false,
+              };
+          } else {
+              newAnimation = {...animations[aniIndex]};
+          }
+          
+          
           
           /*var frames_zipped = frames.map(function(e, i) {
             return [e, thumbnails[i]];
@@ -99,22 +143,11 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           
           const frames_zipped = zipArrays(frames, thumbnails, coords, reference);
         
-          const updatedAnimations = [...animations || []];
-          const newAnimation = {
-              id: crypto.randomUUID(),
-              name: ch.name,
-              frames: [],
-              order: 0,
-              startTime: 0,
-              character: charId,
-              referenceOpacity: 0,
-              onionSkinning: 0,
-              showPose: false,
-              hidden: false,
-          };
           
-          var c = 0;
+          
+          var c = newAnimation.frames.length;
           const updatedFiles = [...filesID || []];
+          const updatedFrames = [...newAnimation.frames]
           for (const f of frames_zipped) {
               const frameId = crypto.randomUUID();
               
@@ -141,12 +174,17 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                   reference: ref_img,
               };
               
-              newAnimation.frames.push(newFrame);
+              updatedFrames.push(newFrame);
               
               c++;
           }
           
-          updatedAnimations.push(newAnimation);
+          newAnimation.frames = updatedFrames;
+          if (aniIndex == -1) {
+            updatedAnimations.push(newAnimation);
+          } else {
+            updatedAnimations[aniIndex] = newAnimation;
+          }
           dispatch(setAnimations(updatedAnimations));
           dispatch(setFilesID(updatedFiles));
           
@@ -178,10 +216,33 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           style={modalStyle}
         >
           <p className="w-full pb-8 text-sm text-gray-800 fon">
-            Motion Video Upload
+            Create Animation
           </p>
 
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          
+            <div className="block py-2">
+              <label className="text-sm font-semibold text-gray-500 ">
+                Add to Layer
+              </label>
+
+              <Field
+                as="select"
+                name="addToAnimation"
+                onChange={handleChange}
+                value={values.addToAnimation}
+                className="w-full px-4 py-2 border border-gray-300 rounded "
+              >
+                <option value="new">New Layer</option>
+                <option value="selected">Selected Layer</option>
+              </Field>
+
+              <ErrorMessage
+                name="charType"
+                component="div"
+                className="py-1 text-sm italic font-semibold text-red-500"
+              />
+            </div>
             
 
             <div className="block py-2">
@@ -240,9 +301,83 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
               />
             </div>
             
-            <img id="server-result-frame"></img>
+            
             
 
+            
+            
+            
+            <div className="block py-2 text-center justify-center">
+              <label className="py-2 text-lg font-semibold text-gray-500 items-center justify-center">
+                - or -
+              </label>
+            </div>
+            
+            
+            <div className="block py-2">
+
+              <div className="block w-full py-8 text-sm text-center border-2 border-dashed text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:text-sm file:font-semibold file:bg-violet-50 file:text-gray-500 hover:file:bg-violet-100">
+                <label
+                  className="flex items-center justify-center w-full h-full font-semibold text-gray-500 cursor-pointer"
+                  htmlFor="file"
+                  onClick={handleImgInputClick}
+                >
+                  <span className="flex items-center justify-center w-full h-full">
+                    <p className="text-sm font-semibold">
+                      Add pose reference images for each frame
+                    </p>
+                  </span>
+                </label>
+                <input
+                  type="file"
+                  className="hidden"
+                  name="images"
+                  multiple
+                  accept="image/*"
+                  ref={imgInputRef}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    var selectedValue = e.target.files;
+                    if (values.images) {
+                      selectedValue = [...values.images, ...selectedValue];
+                    }
+                    setFieldValue("images", selectedValue);
+                  }}
+                />
+                
+                {values.images && (
+                  <div>
+                    {
+                      Array.from(values.images).map(
+                        (image, index) =>    
+                        <img
+                          key={index}
+                          alt="preview"
+                          width={"250px"}
+                          src={URL.createObjectURL(image)}
+                          style={{display: 'inline'}}
+                          className="block p-2"
+                        />
+                      )
+                    }
+                    <div className="block py-2">
+                    <button onClick={() => {
+                      setFieldValue("images", null);
+                    }}>Clear</button>
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+              <ErrorMessage
+                name="images"
+                component="div"
+                className="py-1 text-sm italic font-semibold text-red-500 "
+              />
+            </div>
+            
+            <img id="server-result-frame"></img>
+            
+            
             <div className="flex justify-end mt-4 space-x-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-700">
               <button
                 onClick={() => {
@@ -261,10 +396,14 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                 Generate Animation
               </button>
             </div>
+  
           </form>
         </Modal>
       )}
     </Formik>
+    
+    
+    </>
   );
 };
 

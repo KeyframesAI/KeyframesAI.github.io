@@ -96,7 +96,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         // console.log(result); // The is the result object for the form.
         setSubmitting(false);
         
-        const updatedChars = [...characters || []];
+        
         const newChar = {
             id: charId,
             name: result.charName,
@@ -121,23 +121,6 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         }
         
         
-        
-        
-        
-        var key = -1;
-        
-        if (charId != "") {
-          Object.keys(updatedChars).forEach((i) => {
-              if (updatedChars[i].id === charId) {
-                  key = i;
-              }
-          });
-        }
-        
-        
-        
-        
-        
         resetForm();
         onRequestClose();
         
@@ -150,6 +133,16 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
           
           console.log('done finetuning');
           console.log(modelId);
+          
+          var key = -1;
+          const updatedChars = [...characters || []];
+          if (charId != "") {
+            Object.keys(updatedChars).forEach((i) => {
+                if (updatedChars[i].id === charId) {
+                    key = i;
+                }
+            });
+          }
           
           
           if (key==-1) {

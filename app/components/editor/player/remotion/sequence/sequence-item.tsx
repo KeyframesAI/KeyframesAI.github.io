@@ -25,12 +25,14 @@ export const SequenceItem: Record<
     (item: any, options: SequenceItemOptions) => JSX.Element> = {
     
     frame: (item: MediaFile, options: SequenceItemOptions) => {
-        const { fps } = options;
+        const { fps, order } = options;
+        
+        //console.log(order);
 
         const { from, durationInFrames } = calculateFrames(
             {
-                from: item.positionStart,
-                to: item.positionEnd
+                from: order/fps, //item.positionStart,
+                to: (order+1)/fps //item.positionEnd
             },
             fps
         );

@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useMemo } from "react";
 import Moveable, { OnScale, OnDrag, OnResize, OnRotate } from "react-moveable";
 import { useAppSelector, deleteFile } from "@/app/store";
-import { setAnimations, setActiveElement, setActiveAnimationIndex, setActiveFrameIndex, setMediaFiles, setTimelineZoom } from "@/app/store/slices/projectSlice";
+import { setAnimations, setActiveElement, setActiveAnimationIndex, setActiveFrameIndex, setMediaFiles, setTimelineZoom, setCurrentTime } from "@/app/store/slices/projectSlice";
 import { memo, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useAppDispatch } from '@/app/store';
@@ -20,7 +20,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
     
     const [anis, setAnis] = useState<Animation[]>([]);
     const ani = animations.find(an => an.id === aniId);
-    const frames = ani ? ani.frames : [];
+    const frames = [...(ani ? ani.frames : [])];
     
     const frameSize = 150;
     
@@ -66,18 +66,46 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
             // TODO: cause we pass id when media to find the right index i will change this later (this happens cause each timeline pass its index not index from mediaFiles array)
             const actualIndex = frames.findIndex(frame => frame.id === index as unknown as string);
             dispatch(setActiveFrameIndex(actualIndex));
+            
+            //console.log(frames[actualIndex].order / fps);
+            //dispatch(setCurrentTime(frames[actualIndex].order / fps));
         }
     };
 
-    const handleDrag = (clip: MediaFile, target: HTMLElement, left: number) => {
+    const handleDrag = (clip: MediaFile, frameIndex: number, target: HTMLElement, left: number) => {
         // no negative left
         const constrainedLeft = Math.max(left, 0);
         const newPositionStart = constrainedLeft / frameSize;
-        onUpdateMedia(clip.id, {
-            positionStart: newPositionStart,
-            positionEnd: (newPositionStart - clip.positionStart) + clip.positionEnd,
-            endTime: (newPositionStart - clip.positionStart) + clip.endTime
-        })
+        
+        
+        const newOrder = Math.floor(constrainedLeft/frameSize);
+        const diff = newOrder - frames[frameIndex].order;
+        //console.log(constrainedLeft, newOrder, diff);
+        
+        if (diff==0) {
+          return;
+        }
+        
+        const activeId = frames[frameIndex].id;
+        frames[frameIndex] = {...frames[frameIndex], order: newOrder};
+        frames.sort((a, b) => a.order - b.order);
+        
+        const newIndex = frames.findIndex(fr => fr.id === activeId);
+        dispatch(setActiveFrameIndex(newIndex));
+        
+        
+        appDispatch(setAnimations(animations.map(an =>
+            ani.id === an.id ? { ...an, frames: frames } : an
+        )));
+        
+        /*
+        const updatedAnimation = {...animations[activeAnimationIndex], frames: frames};
+        const updatedAnimations = [...animations];
+        updatedAnimations[activeAnimationIndex] = updatedAnimation;
+        console.log(updatedAnimation, updatedAnimations);
+        appDispatch(setAnimations(updatedAnimations));
+        */
+        //console.log(frames, newPositionStart);
 
         target.style.left = `${constrainedLeft}px`;
     };
@@ -120,9 +148,9 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
             <div className="relative h-48 z-10">  
 
                 
-              {ani.frames
+              {frames
                   .filter(frame => frame.isKeyframe === true)
-                  .map((frame) => (
+                  .map((frame, frameIndex) => (
                       <div key={frame.id} className="bg-green-500">
                           <div
                               key={frame.id}
@@ -182,9 +210,15 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                                   transform,
                               }: OnDrag) => {
                                   handleClick(ani.id, frame.id)
-                                  handleDrag(frame, target as HTMLElement, left);
+                                  handleDrag(frame.image, frameIndex, target as HTMLElement, left);
+                                  //console.log(left);
                               }}
                               onDragEnd={({ target, isDrag, clientX, clientY }) => {
+                                  /*for (var i = 0; i<frames.length; i++) {
+                                      onUpdateMedia(frames[i].image.id, frames[i].image);
+                                      onUpdateMedia(frames[i].thumbnail.id, frames[i].thumbnail);
+                                      onUpdateMedia(frames[i].reference.id, frames[i].reference);
+                                  }*/
                               }}
 
                               /* resizable*/

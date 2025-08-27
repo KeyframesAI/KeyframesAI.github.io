@@ -123,14 +123,14 @@ export const PoseSequenceItem: Record<
     (item: any, options: SequenceItemOptions) => JSX.Element> = {
     
     frame: (item: MediaFile, options: SequenceItemOptions) => {
-        const { fps, pose_raw, animations, activeAnimationIndex, frame_index } = options;
+        const { fps, order, pose_raw, animations, activeAnimationIndex, frame_index } = options;
         
         const dispatch = useAppDispatch();
 
         const { from, durationInFrames } = calculateFrames(
             {
-                from: item.positionStart,
-                to: item.positionEnd
+                from: order/fps, //item.positionStart,
+                to: (order+1)/fps //item.positionEnd
             },
             fps
         );

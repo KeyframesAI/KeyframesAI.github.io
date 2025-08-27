@@ -8,19 +8,34 @@ import { useDispatch } from "react-redux";
 
 export const PreviewPlayer = () => {
     const projectState = useAppSelector((state) => state.projectState);
-    const { duration, currentTime, isPlaying, isMuted, fps } = projectState;
+    const { duration, currentTime, isPlaying, isMuted, fps, animations } = projectState;
     const playerRef = useRef<PlayerRef>(null);
     const dispatch = useDispatch();
 
     // update frame when current time with marker
     useEffect(() => {
-        const frame = Math.round(currentTime * fps);
+        const frame = Math.floor(currentTime * fps);
         //console.log(currentTime, frame);
         if (playerRef.current && !isPlaying) {
             playerRef.current.pause();
             playerRef.current.seekTo(frame);
         }
     }, [currentTime, fps]);
+    
+    useEffect(() => {
+        
+        console.log(currentTime);
+        if (playerRef.current && playerRef.current.isPlaying()) {
+            console.log(Math.round(currentTime * fps), playerRef.current.getCurrentFrame());
+        }
+    }, [playerRef]);
+    
+    /*const onFrameUpdate: CallbackListener<'frameupdate'> = (e) => {
+      console.log('frame has updated to ' + e.detail.frame);
+      dispatch(setCurrentTime(e.detail.frame/fps));
+    };*/
+      
+    //console.log(currentTime);
 
     useEffect(() => {
         playerRef?.current?.addEventListener("play", () => {
@@ -32,6 +47,8 @@ export const PreviewPlayer = () => {
         playerRef?.current?.addEventListener("ended", () => {
             dispatch(setCurrentTime(0));
         });
+        //playerRef?.current?.addEventListener('timeupdate', onTimeupdate);
+        //playerRef?.current?.addEventListener('frameupdate', onFrameUpdate);
         return () => {
             playerRef?.current?.removeEventListener("play", () => {
                 dispatch(setIsPlaying(true));
@@ -42,6 +59,7 @@ export const PreviewPlayer = () => {
             playerRef?.current?.removeEventListener("ended", () => {
                 dispatch(setCurrentTime(0));
             });
+            //playerRef?.current?.removeEventListener('frameupdate', onFrameUpdate);
         };
     }, [playerRef]);
 
@@ -65,6 +83,7 @@ export const PreviewPlayer = () => {
     }, [isMuted]);
     
     //console.log(duration, fps);
+    
 
     return (
         <Player
