@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppSelector, deleteFile } from '../../../store';
-import { setActiveAnimationIndex, setActiveFrameIndex, setAnimations, setFilesID } from '../../../store/slices/projectSlice';
+import { setActiveAnimationIndex, setActiveFrameIndex, setAnimations, setFilesID, setHistory } from '../../../store/slices/projectSlice';
 import { MediaFile, Frame, Animation } from '../../../types';
 import { useAppDispatch, storeFile, getFile } from '../../../store';
 
@@ -15,11 +15,12 @@ import { Scatter } from "react-chartjs-2";
 import "chartjs-plugin-dragdata";
 import "chart.js/auto";
 
-import {generateFrame, saveMediaFile} from "../../../utils/callHuggingface";
+import {generateFrame, saveMediaFile, getUpdatedHistory} from "../../../utils/callHuggingface";
 
 
 export default function FrameProperties() {
-    const { activeAnimationIndex, activeFrameIndex, animations, characters, fps, filesID, resolution } = useAppSelector((state) => state.projectState);
+    const projectState = useAppSelector((state) => state.projectState);
+    const { activeAnimationIndex, activeFrameIndex, animations, characters, fps, filesID, resolution } = projectState;
 
     //console.log(animation, frame);
     const dispatch = useAppDispatch();
@@ -38,6 +39,8 @@ export default function FrameProperties() {
     
     
     const onUpdateFrame = (id: string, updates: Partial<Frame>) => {
+        dispatch(setHistory(getUpdatedHistory(projectState)));
+    
         var updatedFrames = animation.frames.map(fr =>
             fr.id === id ? { ...fr, ...updates } : fr
         );
@@ -45,6 +48,8 @@ export default function FrameProperties() {
         dispatch(setAnimations(animations.map(ani =>
             ani.id === animation.id ? { ...ani, frames: updatedFrames } : ani
         )));
+        
+        
     };
     
     const onUpdateAnimation = (id: string, updates: Partial<Animation>) => {
@@ -58,53 +63,48 @@ export default function FrameProperties() {
     const onDeleteAni = async (id: string) => {
         console.log("delete", id);
         const updated = animations.filter(f => f.id !== id);
+        const toDelete = [];
         for (const frame of animation.frames) {
-            deleteFile(frame.image.fileId);
-            deleteFile(frame.thumbnail.fileId);
+            //deleteFile(frame.image.fileId);
+            //deleteFile(frame.thumbnail.fileId);
+            toDelete.push(frame.image.fileId);
+            toDelete.push(frame.thumbnail.fileId);
             if (frame.reference) {
-                deleteFile(frame.reference.fileId);
+                //deleteFile(frame.reference.fileId);
+                toDelete.push(frame.reference.fileId);
             }
         }
+        dispatch(setHistory(getUpdatedHistory(projectState, toDelete)));
+        
         if (updated.length < animations.length) {
           dispatch(setActiveAnimationIndex(0));
           dispatch(setActiveFrameIndex(0));
           dispatch(setAnimations(updated));
         }
         console.log(animations);
+        
     };
     
-    const onDeleteFrame = async (id: string) => {
-        console.log("delete", id);
-        const updated = animation.frames.filter(f => f.id !== id);
-        deleteFile(frame.image.fileId);
-        deleteFile(frame.thumbnail.fileId);
-        if (frame.reference) {
-            deleteFile(frame.reference.fileId);
-        }
-        
-        if (updated.length < animation.frames.length) {
-          dispatch(setActiveFrameIndex(0));
-          
-          dispatch(setAnimations(animations.map(ani =>
-              ani.id === animation.id ? { ...ani, frames: updated } : ani
-          )));
-        }
-        console.log(animation);
-    };
+    
     
     const onDeleteFrames = async () => {
         const updated = [...animation.frames];
         updated.splice(deleteFrom, deleteTo-deleteFrom+1);
         
-        /*
+        const toDelete = [];
         for (var i = deleteFrom; i<=deleteTo; i++) {
             const frame = animation.frames[i];
-            deleteFile(frame.image.fileId);
-            deleteFile(frame.thumbnail.fileId);
+            //deleteFile(frame.image.fileId);
+            //deleteFile(frame.thumbnail.fileId);
+            toDelete.push(frame.image.fileId);
+            toDelete.push(frame.thumbnail.fileId);
             if (frame.reference) {
-                deleteFile(frame.reference.fileId);
+                //deleteFile(frame.reference.fileId);
+                toDelete.push(frame.reference.fileId);
             }
-        }*/
+        }
+        
+        dispatch(setHistory(getUpdatedHistory(projectState, toDelete)));
         
         if (updated.length < animation.frames.length) {
           dispatch(setActiveFrameIndex(0));
@@ -113,6 +113,8 @@ export default function FrameProperties() {
               ani.id === animation.id ? { ...ani, frames: updated } : ani
           )));
         }
+        
+        
     };
     
     const createDuplicateFrame = async (frame: Frame) => {
@@ -141,6 +143,7 @@ export default function FrameProperties() {
     };
     
     const onDuplicateFrame = async () => {
+        dispatch(setHistory(getUpdatedHistory(projectState)));
         
         const newFrame: Frame = await createDuplicateFrame(frame);
         
@@ -164,6 +167,7 @@ export default function FrameProperties() {
     };
     
     const onDuplicateAnimation = async () => {
+        dispatch(setHistory(getUpdatedHistory(projectState)));
         
         const newFrames = []
         for (const frame of animation.frames) {

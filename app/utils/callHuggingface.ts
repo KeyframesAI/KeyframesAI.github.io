@@ -2,8 +2,9 @@
 
 //import React from "react";
 import { Client, handle_file } from "@gradio/client";
-import { storeFile } from "../store";
-import { MediaFile, Frame } from "@/app/types";
+import { storeFile, deleteFile } from "../store";
+import { MediaFile, Frame, ProjectState } from "@/app/types";
+
 
 /*
 const https = require('https'); // Use https for secure URLs
@@ -34,7 +35,7 @@ async function getFrames(data: any[]){
   var frames = [];
   var c = 0;
   for (const frame of data) {
-      const url = frame.image.src;
+      const url = frame.image.url;
       if (url) {
         const img = await getFileFromUrl(url, 'frame'+c+url.substring(url.lastIndexOf('.')));
         frames.push(img);
@@ -93,6 +94,35 @@ export const saveMediaFile = async (file: File, i: number, updatedFiles: string[
     return img;
 };
 
+
+export const getUpdatedHistory = (state: ProjectState, deleted: string[] = []) => {
+    const animations = state.animations.map(ani => {
+      return {...ani, frames: ani.frames.map(fr => {
+        return {...fr}
+      })}
+    });
+    const st = {...state, animations: animations, lastModified: Date.now().toString()};
+    
+    if (deleted) {
+        st.deletedFiles = deleted;
+    }
+    
+    const updatedHistory = [...Array.from(state.history)];
+    updatedHistory.push(st);
+    
+    while (updatedHistory.length > 10) {
+        const removed = updatedHistory.shift();
+        if (removed && removed.deletedFiles) {
+          for (const file of removed.deletedFiles) {
+              deleteFile(file);
+          }
+        }
+    }
+    
+    console.log(updatedHistory);
+    
+    return updatedHistory;
+};
 
 
 export const finetuneModel = async (images: File[], modelId: string) => {

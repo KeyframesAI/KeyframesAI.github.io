@@ -158,6 +158,7 @@ export interface ProjectState {
     aspectRatio: string;
     history: ProjectState[]; // stack for undo
     future: ProjectState[]; // stack for redo
+    deletedFiles: string[];
     exportSettings: ExportConfig;
 }
 

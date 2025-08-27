@@ -8,9 +8,11 @@ interface GlobalKeyHandlerProps {
     /*handleDuplicate: () => void;
     handleSplit: () => void;*/
     handleDelete: () => void;
+    handleRedo: () => void;
+    handleUndo: () => void;
 }
 
-const GlobalKeyHandler = ({ /*handleDuplicate, handleSplit,*/ handleDelete }: GlobalKeyHandlerProps) => {
+const GlobalKeyHandler = ({ /*handleDuplicate, handleSplit,*/ handleDelete, handleRedo, handleUndo }: GlobalKeyHandlerProps) => {
     const projectState = useAppSelector((state) => state.projectState);
     const dispatch = useDispatch();
 
@@ -50,6 +52,8 @@ const GlobalKeyHandler = ({ /*handleDuplicate, handleSplit,*/ handleDelete }: Gl
             if (isTyping) return;
             
             const shift = 1/fps; //.01;
+            
+            //console.log(e);
 
             switch (e.code) {
                 case 'Space':
@@ -67,11 +71,23 @@ const GlobalKeyHandler = ({ /*handleDuplicate, handleSplit,*/ handleDelete }: Gl
                 case 'KeyS':
                     e.preventDefault();
                     handleSplit();
-                    break;
+                    break;*/
                 case 'Delete':
                     e.preventDefault();
                     handleDelete();
-                    break;*/
+                    break;
+                case 'KeyZ':
+                    if (e.ctrlKey) {
+                      e.preventDefault();
+                      handleUndo();
+                    }
+                    break;
+                case 'KeyY':
+                    if (e.ctrlKey) {
+                      e.preventDefault();
+                      handleRedo();
+                    }
+                    break;
                 case 'KeyT':
                     e.preventDefault();
                     dispatch(setMarkerTrack(!enableMarkerTrackingRef.current));
@@ -94,7 +110,7 @@ const GlobalKeyHandler = ({ /*handleDuplicate, handleSplit,*/ handleDelete }: Gl
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [hasInteracted, handleDelete, /*handleDuplicate, handleSplit,*/ duration, dispatch]);
+    }, [hasInteracted, handleDelete, handleRedo, handleUndo, /*handleDuplicate, handleSplit,*/ duration, dispatch]);
 
     return null;
 };

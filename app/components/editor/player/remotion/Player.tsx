@@ -16,7 +16,7 @@ export const PreviewPlayer = () => {
     useEffect(() => {
         const frame = Math.floor(currentTime * fps);
         //console.log(currentTime, frame);
-        if (playerRef.current && !isPlaying) {
+        if (frame && playerRef.current && !isPlaying) {
             playerRef.current.pause();
             playerRef.current.seekTo(frame);
         }
@@ -24,7 +24,7 @@ export const PreviewPlayer = () => {
     
     useEffect(() => {
         
-        console.log(currentTime);
+        //console.log(currentTime);
         if (playerRef.current && playerRef.current.isPlaying()) {
             console.log(Math.round(currentTime * fps), playerRef.current.getCurrentFrame());
         }

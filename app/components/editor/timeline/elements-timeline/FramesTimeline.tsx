@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useMemo } from "react";
 import Moveable, { OnScale, OnDrag, OnResize, OnRotate } from "react-moveable";
 import { useAppSelector, deleteFile } from "@/app/store";
-import { setAnimations, setActiveElement, setActiveAnimationIndex, setActiveFrameIndex, setMediaFiles, setTimelineZoom, setCurrentTime } from "@/app/store/slices/projectSlice";
+import { setAnimations, setHistory, setActiveElement, setActiveAnimationIndex, setActiveFrameIndex, setMediaFiles, setTimelineZoom, setCurrentTime } from "@/app/store/slices/projectSlice";
 import { memo, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useAppDispatch } from '@/app/store';
@@ -10,10 +10,12 @@ import Header from "../Header";
 import { MediaFile } from "@/app/types";
 import { debounce, throttle } from "lodash";
 
+import {getUpdatedHistory} from "../../../../utils/callHuggingface";
 
 export default function FramesTimeline({ aniId }: { aniId: string }) {
     const targetRefs = useRef<Record<string, HTMLDivElement | null>>({});
-    const { mediaFiles, textElements, activeAnimationIndex, activeFrameIndex, animations, timelineZoom, fps } = useAppSelector((state) => state.projectState);
+    const projectState = useAppSelector((state) => state.projectState);
+    const { mediaFiles, textElements, activeAnimationIndex, activeFrameIndex, animations, timelineZoom, fps } = projectState;
     const dispatch = useDispatch();
     const appDispatch = useAppDispatch();
     const moveableRef = useRef<Record<string, Moveable | null>>({});
@@ -80,6 +82,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
         const constrainedLeft = Math.max(left, 0);
         const newPositionStart = constrainedLeft / frameSize;
         
+        appDispatch(setHistory(getUpdatedHistory(projectState)));
         
         const newOrder = Math.floor(constrainedLeft/frameSize);
         const diff = newOrder - frames[frameIndex].order;
@@ -100,6 +103,9 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
         appDispatch(setAnimations(animations.map(an =>
             ani.id === an.id ? { ...an, frames: frames } : an
         )));
+        
+        
+        //console.log(projectState.history);
         
         /*
         const updatedAnimation = {...animations[activeAnimationIndex], frames: frames};

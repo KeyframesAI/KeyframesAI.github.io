@@ -29,7 +29,7 @@ export const SequenceItem: Record<
         const { fps, order } = options;
         
         //console.log(order);
-        if (!order) {
+        if (order === null || order === undefined) {
             return (<></>);
         }
 

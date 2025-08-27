@@ -28,6 +28,7 @@ export const initialState: ProjectState = {
     aspectRatio: '16:9',
     history: [],
     future: [],
+    deletedFiles: [],
     exportSettings: {
         resolution: '1080p',
         quality: 'high',
@@ -58,6 +59,8 @@ const calculateAnimationDuration = (
     return Math.max(0, ...durations);
 };
 
+
+
 const projectStateSlice = createSlice({
     name: 'projectState',
     initialState,
@@ -66,14 +69,28 @@ const projectStateSlice = createSlice({
             state.mediaFiles = action.payload;
             // Calculate duration based on the last video's end time
             state.duration = calculateTotalDuration(state.mediaFiles, state.textElements);
+            
+            //state.history.push(state);
         },
         setCharacters: (state, action: PayloadAction<Character[]>) => {
             state.characters = action.payload;
+            
+            //state.history.push(state);
         },
         setAnimations: (state, action: PayloadAction<Animation[]>) => {
             state.animations = action.payload;
             
             state.duration = calculateAnimationDuration(state.animations) / state.fps;
+        },
+        setHistory: (state, action: PayloadAction<ProjectState[]>) => {
+            if (state.history.length < action.payload.length) {
+              state.future = [];
+            }
+            
+            state.history = action.payload;
+        },
+        setFuture: (state, action: PayloadAction<ProjectState[]>) => {
+            state.future = action.payload;
         },
         setProjectName: (state, action: PayloadAction<string>) => {
             state.projectName = action.payload;
@@ -154,6 +171,8 @@ export const {
     setMediaFiles,
     setCharacters,
     setAnimations,
+    setHistory,
+    setFuture,
     setTextElements,
     setCurrentTime,
     setProjectName,

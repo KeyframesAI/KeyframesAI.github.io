@@ -5,11 +5,11 @@ import * as Yup from "yup";
 import toast from 'react-hot-toast';
 
 import { getFile, useAppDispatch, useAppSelector } from "../../../../store";
-import { setAnimations, setFilesID } from "../../../../store/slices/projectSlice";
+import { setAnimations, setFilesID, setHistory } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
 import { Character, CharacterType, Frame, Pose } from "@/app/types";
 
-import {poseTransfer, saveMediaFile} from "../../../../utils/callHuggingface";
+import {poseTransfer, saveMediaFile, getUpdatedHistory} from "../../../../utils/callHuggingface";
 
 interface CustomModalProps {
   isOpen: boolean;
@@ -43,8 +43,8 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
     imgInputRef.current?.click();
   };
   
-
-  const { characters, animations, fps, filesID, resolution, activeAnimationIndex } = useAppSelector((state) => state.projectState);
+  const projectState = useAppSelector((state) => state.projectState);
+  const { characters, animations, fps, filesID, resolution, activeAnimationIndex } = projectState;
   const dispatch = useAppDispatch();
   
   const modalStyle = {
@@ -85,11 +85,13 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
             
           })*/,
         images: Yup.mixed().nullable(),
-        addToAnimation: Yup.mixed().nullable(),
+        addToAnimation: Yup.mixed().notRequired(),
       })}
       
       
       onSubmit =  {async (values, { setSubmitting, resetForm }) => {
+        dispatch(setHistory(getUpdatedHistory(projectState)));
+      
         const result = { ...values };
          console.log(result); // The is the result object for the form.
          //return;
@@ -155,7 +157,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
               const ref_img = await saveMediaFile(f[3], c, updatedFiles, fps, resolution);
               
               const pose = JSON.parse(f[2]);
-              console.log(pose);
+              //console.log(pose);
               const newPose: Pose = {
                   id: frameId,
                   body: pose["bodies"][0],
@@ -186,6 +188,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           }
           dispatch(setAnimations(updatedAnimations));
           dispatch(setFilesID(updatedFiles));
+          
           
           
           toast.success('Animation added successfully.', { id: toast_id });

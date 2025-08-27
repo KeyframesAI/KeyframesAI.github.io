@@ -69,6 +69,7 @@ export default function Projects() {
             aspectRatio: '16:9',
             history: [],
             future: [],
+            deletedFiles: [],
             exportSettings: {
                 resolution: '1080p',
                 quality: 'high',
