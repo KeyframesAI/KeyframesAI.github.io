@@ -9,6 +9,8 @@ import "chart.js/auto";
 
 const REMOTION_SAFE_FRAME = 0;
 
+const dispatch = useAppDispatch();
+
 interface SequenceItemOptions {
     handleTextChange?: (id: string, text: string) => void;
     fps: number;
@@ -125,7 +127,7 @@ export const PoseSequenceItem: Record<
     frame: (item: MediaFile, options: SequenceItemOptions) => {
         const { fps, order, pose_raw, animations, activeAnimationIndex, frame_index } = options;
         
-        const dispatch = useAppDispatch();
+        
 
         const { from, durationInFrames } = calculateFrames(
             {

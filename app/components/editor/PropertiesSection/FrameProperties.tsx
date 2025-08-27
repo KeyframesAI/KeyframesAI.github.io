@@ -21,7 +21,7 @@ import {generateFrame, saveMediaFile} from "../../../utils/callHuggingface";
 export default function FrameProperties() {
     const { activeAnimationIndex, activeFrameIndex, animations, characters, fps, filesID, resolution } = useAppSelector((state) => state.projectState);
     const animation = animations[activeAnimationIndex];
-    if (!animation) return null;
+    
     const frame = animation.frames[activeFrameIndex];
     //console.log(animation, frame);
     const dispatch = useAppDispatch();
@@ -34,7 +34,7 @@ export default function FrameProperties() {
 
     }, [activeFrameIndex]);
     
-    
+    if (!animation) return null;
     
     
     const onUpdateFrame = (id: string, updates: Partial<Frame>) => {
