@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { getFile, useAppDispatch, useAppSelector } from "../../../../store";
 import { setAnimations, setFilesID } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
+import { Character, CharacterType, Frame, Pose } from "@/app/types";
 
 import {poseTransfer, saveMediaFile} from "../../../../utils/callHuggingface";
 
@@ -20,12 +21,11 @@ interface CustomModalProps {
   contentLabel: string;
 }
 
-const zipArrays = (...arr) => Array.from({ length: Math.max(...arr.map(a => a.length)) }, (_, i) => arr.map(a => a[i]));
+const zipArrays = (...arr: any[]) => Array.from({ length: Math.max(...arr.map(a => a.length)) }, (_, i) => arr.map(a => a[i]));
 
 
 
 const MotionVideoUploader: React.FC<CustomModalProps> = ({
-  charId,
   isOpen,
   onRequestClose,
   contentLabel,
@@ -33,7 +33,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
   // Ref for the file Input element.
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
-  
+  const charId = contentLabel;
   
 
   const handleFileInputClick = () => {
@@ -52,7 +52,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
   };
   
   
-  const [char, setChar] = useState<Character>(null);
+  const [char, setChar] = useState<Character | null | undefined>(null);
   
   useEffect(() => {
       const selected = characters.find((c) => c.id == charId);
@@ -60,10 +60,6 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
 
   }, [characters]);
   
-  
-  const handleSave = (values) => {
-    // do what you want like on submit
-  }
   
   
   
@@ -74,7 +70,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
     <Formik
       initialValues={{
         video: (null as File | null),
-        images: (null as File | null),
+        images: (null as File[] | null),
         addToAnimation: "new",
       }}
       // In summary, Yup is responsible for the schema-based validation, while Formik handles form management and state. Combining Yup with Formik provides a robust solution for building forms with client-side validation.
@@ -114,6 +110,10 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         try {
           const ch = characters.find((c) => c.id == charId);
           
+          if (!ch) {
+            throw new Error("Unable to find character");
+          }
+          
           const [frames, thumbnails, coords, reference] = await poseTransfer(result.video, result.images, ch.images, ch.modelId, resolution);
           
           const updatedAnimations = [...animations || []];
@@ -124,7 +124,6 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                   name: ch.name,
                   frames: [],
                   order: 0,
-                  startTime: 0,
                   character: charId,
                   referenceOpacity: 0,
                   onionSkinning: 0,
@@ -157,14 +156,14 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
               
               const pose = JSON.parse(f[2]);
               console.log(pose);
-              const newPose = {
+              const newPose: Pose = {
                   id: frameId,
                   body: pose["bodies"][0],
                   hand1: pose["hands"][0],
                   hand2: pose["hands"][1],
               }
               
-              const newFrame = {
+              const newFrame: Frame = {
                   id: frameId,
                   order: c,
                   image: img,
@@ -266,12 +265,11 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                   accept="video/*"
                   ref={fileInputRef}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    var selectedValue = e.target.files;
-                    
-                    if (values.video) {
-                      selectedValue = [...values.video, ...selectedValue];
+                    const selectedValue = e.target.files;
+
+                    if (selectedValue) {
+                      setFieldValue("video", selectedValue[0]);
                     }
-                    setFieldValue("video", selectedValue[0]);
                   }}
                 />
                 
@@ -336,11 +334,15 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                   accept="image/*"
                   ref={imgInputRef}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    var selectedValue = e.target.files;
-                    if (values.images) {
-                      selectedValue = [...values.images, ...selectedValue];
+                    const selectedValue = e.target.files;
+                    if (selectedValue) {
+                      if (values.images) {
+                        const imgs = (values.images as File[]);
+                        setFieldValue("images", [...imgs, ...Array.from(selectedValue)]);
+                      } else {
+                        setFieldValue("images", selectedValue);
+                      }
                     }
-                    setFieldValue("images", selectedValue);
                   }}
                 />
                 

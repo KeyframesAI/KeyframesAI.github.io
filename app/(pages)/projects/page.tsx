@@ -52,7 +52,6 @@ export default function Projects() {
             animations: [],
             textElements: [],
             currentTime: 0,
-            cursorPosition: 0,
             isPlaying: false,
             isMuted: false,
             duration: 0,

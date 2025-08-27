@@ -1,7 +1,7 @@
 import { storeProject, useAppDispatch, useAppSelector } from "@/app/store";
 import { SequenceItem } from "./sequence-item";
 import { PoseSequenceItem } from "./pose-sequence-item";
-import { MediaFile, TextElement } from "@/app/types";
+import { MediaFile, TextElement, Frame } from "@/app/types";
 import { useCurrentFrame, useVideoConfig } from 'remotion';
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { setCurrentTime, setMediaFiles, setActiveFrameIndex } from "@/app/store/slices/projectSlice";
@@ -35,7 +35,7 @@ const Composition = () => {
     
     //console.log(animations);
     
-    const getFrameSequenceItem = (item, order, opacity=100) => {
+    const getFrameSequenceItem = (item: MediaFile | undefined, order: number, opacity: number | undefined) => {
     
         if (!item) return;
         const trackItem = {
@@ -52,7 +52,7 @@ const Composition = () => {
     };
     
     
-    const getPoseSequenceItem = (f, index) => {
+    const getPoseSequenceItem = (f: Frame, index: number) => {
         const item = f.reference;
         
         if (!item) return;
@@ -61,14 +61,14 @@ const Composition = () => {
         } as MediaFile;
         
         
-        return PoseSequenceItem[trackItem.type](trackItem, {
+        return PoseSequenceItem(trackItem, {
             fps: fps, 
             order: f.order,
-            pose_raw: f.pose.body,
+            pose_raw: f.pose?.body,
             animations: animations,
             activeAnimationIndex: activeAnimationIndex,
             frame_index: index,
-        });
+        }, f);
       
     };
       
@@ -91,8 +91,9 @@ const Composition = () => {
                         const fr = {...ani.frames[i].thumbnail, id:crypto.randomUUID(), positionStart: f.thumbnail.positionStart, positionEnd: f.thumbnail.positionEnd};
                         const opacity = (1.0 - Math.abs(layer) / (ani.onionSkinning+1)) / 2.0;
                         //console.log(opacity);
-                        
-                        items.push(getFrameSequenceItem(fr, f.order, f.thumbnail.opacity * opacity));
+                        if (f.thumbnail.opacity) {
+                          items.push(getFrameSequenceItem(fr, f.order, f.thumbnail.opacity * opacity));
+                        }
                       }
                     }
                     return items;

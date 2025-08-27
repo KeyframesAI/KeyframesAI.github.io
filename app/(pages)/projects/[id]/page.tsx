@@ -20,7 +20,7 @@ import TextProperties from "../../../components/editor/PropertiesSection/TextPro
 import FrameProperties from "../../../components/editor/PropertiesSection/FrameProperties";
 import { Timeline } from "../../../components/editor/timeline/Timline";
 import { PreviewPlayer } from "../../../components/editor/player/remotion/Player";
-import { MediaFile, Animation } from "@/app/types";
+import { MediaFile, Animation, Frame } from "@/app/types";
 import ExportList from "../../../components/editor/AssetsPanel/tools-section/ExportList";
 import Image from "next/image";
 import ProjectName from "../../../components/editor/player/ProjectName";
@@ -80,8 +80,11 @@ export default function Project({ params }: { params: { id: string } }) {
                                   const thumb = await getFile(frame.thumbnail.fileId);
                                   const thumbnail = { ...frame.thumbnail, src: URL.createObjectURL(thumb) };
                                   
-                                  const ref_img = await getFile(frame.reference.fileId);
-                                  const reference = { ...frame.reference, src: URL.createObjectURL(ref_img) };
+                                  var reference = null;
+                                  if (frame.reference) {
+                                    const ref_img = await getFile(frame.reference.fileId);
+                                    reference = { ...frame.reference, src: URL.createObjectURL(ref_img) };
+                                  }
                                   
                                   
                                   

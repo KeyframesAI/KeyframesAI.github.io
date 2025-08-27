@@ -17,13 +17,7 @@ export const Timeline = () => {
     const timelineRef = useRef<HTMLDivElement>(null)
     
     const { animations } = useAppSelector((state) => state.projectState);
-    const [anis, setAnis] = useState<Animation[]>([]);
-    
-    useEffect(() => {
-        setAnis(animations);
-
-    }, [animations]);
-    
+    const aniRev = [...animations].reverse();
 
     const throttledZoom = useMemo(() =>
         throttle((value: number) => {
@@ -171,7 +165,7 @@ export const Timeline = () => {
                     
                       <ImageTimeline />
                       
-                      {anis.toReversed().map((ani) => (
+                      {aniRev.map((ani) => (
                         <div key={ani.id} >
                             
                             <FramesTimeline aniId={ani.id} />

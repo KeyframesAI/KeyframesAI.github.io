@@ -52,7 +52,7 @@ export interface Pose {
     body: number[][];
     hand1: number[][];
     hand2: number[][];
-    face: number[][];
+    face?: number[][];
 }
 
 
@@ -71,7 +71,6 @@ export interface Animation {
     name: string;
     frames: Frame[];
     order: number;
-    startTime: number;
     character?: string;
     referenceOpacity: number;
     showPose: boolean;
@@ -127,14 +126,14 @@ export interface ExportConfig {
     includeSubtitles: boolean; // TODO: add this as an option
 }
 
-export type ActiveElement = 'media' | 'text' | 'export';
+export type ActiveElement = 'character' | 'frame' | 'media' | 'text' | 'export';
 
 
 export interface ProjectState {
     id: string;
     mediaFiles: MediaFile[];
-    characters?: Character[];
-    animations?: Animation[];
+    characters: Character[];
+    animations: Animation[];
     textElements: TextElement[];
     filesID?: string[],
     currentTime: number;

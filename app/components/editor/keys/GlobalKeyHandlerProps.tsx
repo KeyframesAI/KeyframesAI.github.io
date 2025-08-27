@@ -5,12 +5,12 @@ import { setIsPlaying, setIsMuted, setCurrentTime, setMarkerTrack, setActiveFram
 import { useDispatch } from "react-redux";
 
 interface GlobalKeyHandlerProps {
-    handleDuplicate: () => void;
-    handleSplit: () => void;
+    /*handleDuplicate: () => void;
+    handleSplit: () => void;*/
     handleDelete: () => void;
 }
 
-const GlobalKeyHandler = ({ handleDuplicate, handleSplit, handleDelete }: GlobalKeyHandlerProps) => {
+const GlobalKeyHandler = ({ /*handleDuplicate, handleSplit,*/ handleDelete }: GlobalKeyHandlerProps) => {
     const projectState = useAppSelector((state) => state.projectState);
     const dispatch = useDispatch();
 
@@ -60,7 +60,7 @@ const GlobalKeyHandler = ({ handleDuplicate, handleSplit, handleDelete }: Global
                     e.preventDefault();
                     dispatch(setIsMuted(!isMutedRef.current));
                     break;
-                case 'KeyD':
+                /*case 'KeyD':
                     e.preventDefault();
                     handleDuplicate();
                     break;
@@ -71,7 +71,7 @@ const GlobalKeyHandler = ({ handleDuplicate, handleSplit, handleDelete }: Global
                 case 'Delete':
                     e.preventDefault();
                     handleDelete();
-                    break;
+                    break;*/
                 case 'KeyT':
                     e.preventDefault();
                     dispatch(setMarkerTrack(!enableMarkerTrackingRef.current));
@@ -94,7 +94,7 @@ const GlobalKeyHandler = ({ handleDuplicate, handleSplit, handleDelete }: Global
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [hasInteracted, handleDelete, handleDuplicate, handleSplit, duration, dispatch]);
+    }, [hasInteracted, handleDelete, /*handleDuplicate, handleSplit,*/ duration, dispatch]);
 
     return null;
 };

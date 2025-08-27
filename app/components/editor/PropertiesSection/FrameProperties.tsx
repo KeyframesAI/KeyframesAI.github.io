@@ -2,7 +2,7 @@
 
 import { useAppSelector, deleteFile } from '../../../store';
 import { setActiveAnimationIndex, setActiveFrameIndex, setAnimations, setFilesID } from '../../../store/slices/projectSlice';
-import { MediaFile } from '../../../types';
+import { MediaFile, Frame, Animation } from '../../../types';
 import { useAppDispatch, storeFile, getFile } from '../../../store';
 
 import Image from 'next/image';
@@ -20,9 +20,7 @@ import {generateFrame, saveMediaFile} from "../../../utils/callHuggingface";
 
 export default function FrameProperties() {
     const { activeAnimationIndex, activeFrameIndex, animations, characters, fps, filesID, resolution } = useAppSelector((state) => state.projectState);
-    const animation = animations[activeAnimationIndex];
-    
-    const frame = animation.frames[activeFrameIndex];
+
     //console.log(animation, frame);
     const dispatch = useAppDispatch();
     
@@ -34,7 +32,9 @@ export default function FrameProperties() {
 
     }, [activeFrameIndex]);
     
+    const animation: Animation = animations[activeAnimationIndex];
     if (!animation) return null;
+    const frame: Frame = animation.frames[activeFrameIndex];
     
     
     const onUpdateFrame = (id: string, updates: Partial<Frame>) => {
@@ -44,14 +44,6 @@ export default function FrameProperties() {
     
         dispatch(setAnimations(animations.map(ani =>
             ani.id === animation.id ? { ...ani, frames: updatedFrames } : ani
-        )));
-    };
-    
-    const onUpdateAllFrames = (id: string, updates: Partial<Frame>) => {
-        var updatedFrames = animation.frames.map(fr => true ? { ...fr, ...updates, thumbnail: {...fr.thumbnail, ...updates.thumbnail} } : fr);
-        
-        dispatch(setAnimations(animations.map(ani =>
-            ani.id === id ? { ...ani, frames: updatedFrames } : ani
         )));
     };
     
@@ -123,7 +115,7 @@ export default function FrameProperties() {
         }
     };
     
-    const createDuplicateFrame = async (frame) => {
+    const createDuplicateFrame = async (frame: Frame) => {
         const imgId = crypto.randomUUID();
         const thumbId = crypto.randomUUID();
         const refId = crypto.randomUUID();
@@ -131,25 +123,31 @@ export default function FrameProperties() {
           id: crypto.randomUUID(), 
           image: {...frame.image, id: imgId, fileId: imgId},
           thumbnail: {...frame.thumbnail, id: thumbId, fileId: thumbId},
-          reference: {...frame.reference, id: refId, fileId: refId},
+          
         };
         
         const img = await getFile(frame.image.fileId);
         const thumb = await getFile(frame.thumbnail.fileId);
-        const ref = await getFile(frame.reference.fileId);
+        if (frame.reference) {
+            const ref = await getFile(frame.reference.fileId);
+            await storeFile(ref, refId);
+            newFrame.reference = {...frame.reference, id: refId, fileId: refId};
+        }
         await storeFile(img, newFrame.image.fileId);
         await storeFile(thumb, newFrame.thumbnail.fileId);
-        await storeFile(ref, newFrame.reference.fileId);
+        
         
         return newFrame;
     };
     
     const onDuplicateFrame = async () => {
         
-        const newFrame = await createDuplicateFrame(frame);
+        const newFrame: Frame = await createDuplicateFrame(frame);
         
         const updatedFrames = [...animation.frames];
-        updatedFrames.splice(activeFrameIndex+1, 0, newFrame);
+        if (newFrame) {
+            updatedFrames.splice(activeFrameIndex+1, 0, newFrame);
+        }
         
         //console.log(frame, newFrame);
         
@@ -186,10 +184,20 @@ export default function FrameProperties() {
     
     
     const onGenerateFrame = async () => {
+        
+    
         const toast_id = toast.loading('Generating frames...');
         
         try {
           const character = characters.find(char => char.id === animation.character);
+          
+          if (!character) {
+              throw Error("Character not found");
+          }
+          
+          if (!frame.pose) {
+              throw Error("No pose available");
+          }
           
           const pose = {
               bodies: frame.pose.body, 
@@ -205,7 +213,7 @@ export default function FrameProperties() {
           hand2: pose["hands"][1],
           */
           
-          const [frames, thumbnails] = await generateFrame(JSON.stringify([pose]), character.images, character.modelId, frame.image.crop.width, frame.image.crop.height);
+          const [frames, thumbnails] = await generateFrame(JSON.stringify([pose]), character.images, character.modelId, frame.image.crop?.width, frame.image.crop?.height);
           //console.log(frames)
           
           const updatedFiles = [...filesID || []];
@@ -249,7 +257,7 @@ export default function FrameProperties() {
           dragY: true,
           round: 0, // Round dragged values to whole numbers
           // Add callbacks for onDragStart, onDrag, onDragEnd as needed
-          onDragEnd: function(e, datasetIndex, index, value) {
+          onDragEnd: function(e: any, datasetIndex: number, index: number, value: any) {
             // Handle data update after drag ends
             console.log('Dragged value:', value);
           }
@@ -314,7 +322,7 @@ export default function FrameProperties() {
                             <ToggleSwitch 
                                 label="visibility" 
                                 checked={animation.hidden}
-                                onChange={(e) => onUpdateAnimation(animation.id, { hidden: e.target.checked })}
+                                onChange={(e:any) => onUpdateAnimation(animation.id, { hidden: e.target.checked })}
                             />
                         </div>
                         
@@ -323,7 +331,7 @@ export default function FrameProperties() {
                             <ToggleSwitch 
                                 label="pose" 
                                 checked={animation.showPose}
-                                onChange={(e) => onUpdateAnimation(animation.id, { showPose: e.target.checked })}
+                                onChange={(e:any) => onUpdateAnimation(animation.id, { showPose: e.target.checked })}
                             />
                         </div>
                         
@@ -334,7 +342,7 @@ export default function FrameProperties() {
                                 min="0"
                                 max="5"
                                 value={animation.onionSkinning}
-                                onChange={(e) => onUpdateAnimation(animation.id, { onionSkinning: Number(e.target.value) })}
+                                onChange={(e:any) => onUpdateAnimation(animation.id, { onionSkinning: Number(e.target.value) })}
                                 className="w-full bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:border-white-500"
                             />
                         </div>
@@ -346,7 +354,7 @@ export default function FrameProperties() {
                                 min="0"
                                 max="100"
                                 value={animation.referenceOpacity}
-                                onChange={(e) => onUpdateAnimation(animation.id, { referenceOpacity: Number(e.target.value) })}
+                                onChange={(e:any) => onUpdateAnimation(animation.id, { referenceOpacity: Number(e.target.value) })}
                                 className="w-full bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:border-white-500"
                             />
                         </div>
@@ -359,7 +367,14 @@ export default function FrameProperties() {
                                 min="0"
                                 max="100"
                                 value={frame.thumbnail.opacity}
-                                onChange={(e) => onUpdateAllFrames(animation.id, { thumbnail: {opacity: Number(e.target.value)} })}
+                                onChange={(e:any) => {
+                                    var updatedFrames = animation.frames.map(fr => true ? { ...fr, thumbnail: {...fr.thumbnail, opacity: Number(e.target.value)} } : fr);
+        
+                                    dispatch(setAnimations(animations.map(ani =>
+                                        ani.id === animation.id ? ({ ...ani, frames: updatedFrames } as Animation) : ani
+                                    )));
+                                    
+                                }}
                                 className="w-full bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:border-white-500"
                             />
                         </div>
@@ -371,7 +386,7 @@ export default function FrameProperties() {
                                 value={animations.length - activeAnimationIndex}
                                 min={1}
                                 max={animations.length}
-                                onChange={(e) => {
+                                onChange={(e:any) => {
                                     const newIndex = (e.target.value - animations.length) * -1;
                                     const updated = [...animations];
                                     updated[newIndex] = animations[activeAnimationIndex];
@@ -392,7 +407,7 @@ export default function FrameProperties() {
                                 type="number"
                                 value={activeFrameIndex == 0 ? frame.order : frame.order - animation.frames[activeFrameIndex-1].order - 1}
                                 min={0}
-                                onChange={(e) => {
+                                onChange={(e:any) => {
                                     const prev = activeFrameIndex == 0 ? frame.order : frame.order - animation.frames[activeFrameIndex-1].order - 1;
                                     const shift = e.target.value - prev;
                                     
@@ -430,7 +445,7 @@ export default function FrameProperties() {
                                 type="number"
                                 value={deleteFrom}
                                 min={0}
-                                onChange={(e) => setDeleteFrom(event.target.value)}
+                                onChange={(e:any) => setDeleteFrom(e.target.value)}
                                 className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
                             />
                         </div>
@@ -441,7 +456,7 @@ export default function FrameProperties() {
                                 value={deleteTo}
                                 min={0}
                                 max={animation.frames.length-1}
-                                onChange={(e) => setDeleteTo(event.target.value)}
+                                onChange={(e:any) => setDeleteTo(e.target.value)}
                                 className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
                             />
                         </div>

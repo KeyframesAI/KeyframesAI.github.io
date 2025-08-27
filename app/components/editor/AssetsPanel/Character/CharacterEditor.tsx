@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from "../../../../store";
 import { setCharacters } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
+import { Character, CharacterType } from "@/app/types";
 
 import {finetuneModel} from "../../../../utils/callHuggingface";
 
@@ -20,15 +21,15 @@ interface CustomModalProps {
   contentLabel: string;
 }
 
+
 const CharacterEditor: React.FC<CustomModalProps> = ({
-  charId,
   isOpen,
   onRequestClose,
   contentLabel,
 }) => {
   // Ref for the file Input element.
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const charId = contentLabel;
   
 
   const handleFileInputClick = () => {
@@ -36,6 +37,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
   };
   
   const onDeleteChars = async (id: string) => {
+    if (characters) {
       const onUpdateChars = characters.filter(f => f.id !== id);
       
       console.log(id);
@@ -46,6 +48,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         onRequestClose();
         toast.success('Character deleted successfully.');
       }
+    }
   };
 
   const { characters } = useAppSelector((state) => state.projectState);
@@ -56,7 +59,7 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
   };
   
   
-  const [char, setChar] = useState<Character>(null);
+  const [char, setChar] = useState<Character | null | undefined>(null);
   
   useEffect(() => {
       const selected = characters.find((c) => c.id == charId);
@@ -80,12 +83,12 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         images: Yup.mixed()
           .required("Required")
           .test("numImages", "Add more images", (value) => {
-            return value.length >= 2;
+            return (value as any[]).length >= 2;
             
           })
           .test("fileSize", "File size is too large", (value) => {
             // Size less than or equal to 100,000,000 bytes (100MB).
-            return Array.from(value).every(val => val instanceof File && val.size <= 100000000);
+            return (value as any[]).every(val => val instanceof File && val.size <= 100000000);
             
           }),
       })}
@@ -97,17 +100,12 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
         setSubmitting(false);
         
         
-        const newChar = {
-            id: charId,
-            name: result.charName,
-            images: [],
-            type: result.charType,
-            
-        };
         
         
+        const images: any[] = [];
+        const modelId = crypto.randomUUID();
         
-        for (const file of result.images) {
+        for (const file of (result.images as File[])) {
             
             const fileId = crypto.randomUUID();
             const newImg = {
@@ -117,28 +115,37 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
                 type: 'image',
             };
     
-            newChar.images.push(newImg);
+            images.push(newImg);
         }
+        
+        const newChar: Character = {
+            id: charId,
+            name: result.charName,
+            images: images,
+            type: (result.charType as CharacterType),
+            modelId: modelId,
+            
+        };
         
         
         resetForm();
         onRequestClose();
         
+        const toast_id = toast.loading('Saving character...');
+        
         try {
-          const toast_id = toast.loading('Saving character...');
           
-          const modelId = crypto.randomUUID();
+          
           await finetuneModel(newChar.images.map(img => img.file), modelId);
-          newChar.modelId = modelId;
           
           console.log('done finetuning');
-          console.log(modelId);
+          console.log(newChar.modelId);
           
           var key = -1;
           const updatedChars = [...characters || []];
           if (charId != "") {
-            Object.keys(updatedChars).forEach((i) => {
-                if (updatedChars[i].id === charId) {
+            updatedChars.forEach((ch, i) => {
+                if (ch.id === charId) {
                     key = i;
                 }
             });
@@ -261,18 +268,22 @@ const CharacterEditor: React.FC<CustomModalProps> = ({
                   accept="image/*"
                   ref={fileInputRef}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    var selectedValue = e.target.files;
-                    if (values.images) {
-                      selectedValue = [...values.images, ...selectedValue];
+                    const selectedValue = e.target.files;
+                    if (selectedValue) {
+                      if (values.images) {
+                        const imgs = (values.images as File[]);
+                        setFieldValue("images", [...imgs, ...Array.from(selectedValue)]);
+                      } else {
+                        setFieldValue("images", selectedValue);
+                      }
                     }
-                    setFieldValue("images", selectedValue);
                   }}
                 />
                 
                 {values.images && (
                   <div>
                     {
-                      Array.from(values.images).map(
+                      Array.from((values.images as File[])).map(
                         (image, index) =>    
                         <img
                           key={index}

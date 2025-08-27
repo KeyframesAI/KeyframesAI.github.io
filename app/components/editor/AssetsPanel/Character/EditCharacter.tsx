@@ -35,10 +35,9 @@ export default function EditCharacter({ charId }: { charId: string }) {
       </label>
 
       <CharacterEditor
-        charId={charId}
         isOpen={isModalOpen}
         onRequestClose={handleCloseModal}
-        contentLabel="My Modal Content"
+        contentLabel={charId}
       />
     </div>
   );

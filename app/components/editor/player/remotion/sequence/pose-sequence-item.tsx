@@ -1,5 +1,5 @@
 import { AbsoluteFill, OffthreadVideo, Audio, Img, Sequence } from "remotion";
-import { MediaFile, TextElement } from "@/app/types";
+import { MediaFile, TextElement, Frame, Animation } from "@/app/types";
 import { useAppDispatch } from "../../../../../store";
 import { setAnimations } from "../../../../../store/slices/projectSlice";
 
@@ -11,9 +11,14 @@ const REMOTION_SAFE_FRAME = 0;
 
 
 
-interface SequenceItemOptions {
+interface PoseSequenceItemOptions {
     handleTextChange?: (id: string, text: string) => void;
     fps: number;
+    order: number,
+    pose_raw: number[][] | undefined,
+    animations: Animation[],
+    activeAnimationIndex: number,
+    frame_index: number,
     editableTextId?: string | null;
     currentTime?: number;
 }
@@ -29,7 +34,7 @@ const calculateFrames = (
 };
 
 const createDataset = (
-    label, data, hidden, color
+    label: any, data: any, hidden: number, color: string
 ) => {
     return {
       label: label,
@@ -38,13 +43,13 @@ const createDataset = (
       borderWidth: 5,
       borderColor: color,
       showLine: true,
-      pointRadius: function(context) {
+      pointRadius: function(context: any) {
           if (context.dataIndex === hidden) {
               return 0; 
           }
           return 15;
       },
-      pointHoverRadius: function(context) {
+      pointHoverRadius: function(context: any) {
           if (context.dataIndex === hidden) {
               return 0; 
           }
@@ -55,7 +60,7 @@ const createDataset = (
     }
 };
 
-const createDatasets = (pose, color) => {
+const createDatasets = (pose: number[][], color: string) => {
     /*
     data.datasets.push(createDataset([
       //{x: 491, y: 0}, 
@@ -120,7 +125,7 @@ const createDatasets = (pose, color) => {
 
 
 
-export const PoseSequenceItem = (item: MediaFile, options: SequenceItemOptions) => {
+export const PoseSequenceItem = (item: MediaFile, options: PoseSequenceItemOptions, frame: Frame) => {
 
         const { fps, order, pose_raw, animations, activeAnimationIndex, frame_index } = options;
         
@@ -141,28 +146,30 @@ export const PoseSequenceItem = (item: MediaFile, options: SequenceItemOptions) 
             height: item.height
         };
         
-        var newWidth = crop.width;
-        var newHeight = crop.height;
+        var newWidth = crop.width ? crop.width : 0;
+        var newHeight = crop.height ? crop.height : 0;
         var shiftx = 0;
         var shifty = 0;
-        if (item.width/item.height > crop.width/crop.height) {
-            newHeight = item.height/item.width * crop.width;
-            shifty = (crop.height-item.height)/2;
-        } else {
-            newWidth = item.width/item.height * crop.height;
-            shiftx = (crop.width-newWidth)/2;
+        if (item.width && item.height && crop.width && crop.height) {
+          if (item.width/item.height > crop.width/crop.height) {
+              newHeight = item.height/item.width * crop.width;
+              shifty = (crop.height-item.height)/2;
+          } else {
+              newWidth = item.width/item.height * crop.height;
+              shiftx = (crop.width-newWidth)/2;
+          }
         }
         //console.log(newWidth, newHeight, shiftx, shifty);
         
         
-        const pose = pose_raw.map(coord => [coord[0] * newWidth + shiftx, (1-coord[1]) * newHeight - shifty]);
+        const pose = pose_raw ? pose_raw.map(coord => [coord[0] * newWidth + shiftx, (1-coord[1]) * newHeight - shifty]) : [];
         
         //console.log(pose);
         //console.log(item);
         
         
         const data = {
-          datasets: [
+          datasets: ([
             {
               label: 'Hidden Dataset',
               data: [{ x: 0, y: 0 }, { x: crop.width, y: crop.height }],
@@ -170,7 +177,7 @@ export const PoseSequenceItem = (item: MediaFile, options: SequenceItemOptions) 
               pointRadius: 10,
               dragData: false,
             },
-          ],
+          ] as any[]),
         };
         
         const bodyData = createDatasets(pose, 'rgba(0, 153, 255, 1)');
@@ -179,14 +186,14 @@ export const PoseSequenceItem = (item: MediaFile, options: SequenceItemOptions) 
         
         //console.log(data.datasets);
 
-        const config = {
+        const config: any = {
           responsive: false,
           plugins: {
             dragData: {
               dragX: true,
               dragY: true,
               //round: 0,
-              onDrag: function(e, datasetIndex, index, value) {
+              onDrag: function(e: any, datasetIndex: number, index: number, value: any) {
                 if (value.copies) {
                   for (const copy of value.copies) {
                       data.datasets[copy[0]].data[copy[1]].x = value.x;
@@ -194,14 +201,14 @@ export const PoseSequenceItem = (item: MediaFile, options: SequenceItemOptions) 
                   }
                 }
               },
-              onDragEnd: function(e, datasetIndex, index, value) {
+              onDragEnd: function(e: any, datasetIndex: number, index: number, value: any) {
                 //console.log('Dragged value:', value);
                 //console.log(data.datasets);
                 
-                const updatedAnimations = animations.map((ani, index) => {
+                const updatedAnimations : Animation[] = animations.map((ani, index) => {
                   if (index == activeAnimationIndex) {
                       const frames = ani.frames.map((frame, index2) => {
-                          if (index2 == frame_index) {
+                          if (index2 == frame_index && frame.pose) {
                               var body = [...frame.pose.body];
                               //console.log(body[value.id]);
                               const old = body[value.id];

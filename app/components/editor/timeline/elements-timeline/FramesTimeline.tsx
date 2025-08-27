@@ -18,18 +18,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
     const appDispatch = useAppDispatch();
     const moveableRef = useRef<Record<string, Moveable | null>>({});
     
-    const [anis, setAnis] = useState<Animation[]>([]);
-    const ani = animations.find(an => an.id === aniId);
-    const frames = [...(ani ? ani.frames : [])];
-    
     const frameSize = 150;
-    
-    //console.log(animations);
-    
-    useEffect(() => {
-        setAnis(animations);
-
-    }, [animations]);
 
 
     // this affect the performance cause of too much re-renders
@@ -55,8 +44,22 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
             dispatch(setMediaFiles(updated));
         }, 100), [dispatch]
     );
+    
+    useEffect(() => {
+        for (const clip of mediaFiles) {
+            moveableRef.current[clip.id]?.updateRect();
+        }
+    }, [frameSize]);
+    
+    
+    const ani = animations.find(an => an.id === aniId);
+    if (!ani) return;
+    
+    const frames = [...(ani ? ani.frames : [])];
+    
+    
 
-    const handleClick = (aniIndex: number, index: number | string) => {
+    const handleClick = (aniIndex: string, index: number | string) => {
         //appDispatch(setActiveElement('frame'));
         appDispatch(setAnimations(animations));
         dispatch(setTimelineZoom(frameSize*fps));
@@ -129,11 +132,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
         })
     };
 
-    useEffect(() => {
-        for (const clip of mediaFiles) {
-            moveableRef.current[clip.id]?.updateRect();
-        }
-    }, [frameSize]);
+    
     
     //console.log(ani);
     
@@ -149,7 +148,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
 
                 
               {frames
-                  .filter(frame => frame.isKeyframe === true)
+                  .filter(frame => frame.isKeyframe === true && frame.thumbnail)
                   .map((frame, frameIndex) => (
                       <div key={frame.id} className="bg-green-500">
                           <div
@@ -177,7 +176,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                                   style={{
                                       objectFit: "contain",
                                   }}
-                                  src={frame.thumbnail.src}//"https://www.svgrepo.com/show/535454/image.svg"
+                                  src={frame.thumbnail.src ? frame.thumbnail.src : ""}//"https://www.svgrepo.com/show/535454/image.svg"
                               />
                               
                               
@@ -230,12 +229,12 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                                   target, width,
                                   delta, direction,
                               }: OnResize) => {
-                                  if (direction[0] === 1) {
+                                  /*if (direction[0] === 1) {
                                       handleClick(ani.id, frame.id)
                                       delta[0] && (target!.style.width = `${width}px`);
                                       handleRightResize(frame, target as HTMLElement, width);
 
-                                  }
+                                  }*/
 
                               }}
                               onResizeEnd={({ target, isDrag, clientX, clientY }) => {

@@ -49,10 +49,9 @@ export default function AddMotionVideo({ charId }: { charId: string }) {
           </label>
           
           <MotionVideoUploader
-            charId={charId}
             isOpen={isModalOpen}
             onRequestClose={handleCloseModal}
-            contentLabel="My Modal Content"
+            contentLabel={charId}
           />
       </div>
   );

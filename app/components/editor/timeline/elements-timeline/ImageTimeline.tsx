@@ -114,7 +114,7 @@ export default function ImageTimeline() {
                                 className="h-32 w-32 min-w-6 mr-2 flex-shrink-0"
                                 height={30}
                                 width={30}
-                                src={clip.src}//"https://www.svgrepo.com/show/535454/image.svg"
+                                src="https://www.svgrepo.com/show/535454/image.svg"
                             />
                             
 

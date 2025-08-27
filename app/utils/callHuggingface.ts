@@ -3,6 +3,7 @@
 //import React from "react";
 import { Client, handle_file } from "@gradio/client";
 import { storeFile } from "../store";
+import { MediaFile, Frame } from "@/app/types";
 
 /*
 const https = require('https'); // Use https for secure URLs
@@ -16,7 +17,7 @@ var request = require('request');
 const hg_space = "acmyu/KeyframesAI2"
 const train_steps = 100
 
-async function getFileFromUrl(url, name, defaultType = 'image/png'){
+async function getFileFromUrl(url: string, name: string, defaultType:string = 'image/png'){
 
   //console.log(url);
   const response = await fetch(url);
@@ -29,13 +30,15 @@ async function getFileFromUrl(url, name, defaultType = 'image/png'){
   
 }
 
-async function getFrames(data){
+async function getFrames(data: any[]){
   var frames = [];
   var c = 0;
   for (const frame of data) {
-      const url = frame.image.url;
-      const img = await getFileFromUrl(url, 'frame'+c+url.substring(url.lastIndexOf('.')));
-      frames.push(img);
+      const url = frame.image.src;
+      if (url) {
+        const img = await getFileFromUrl(url, 'frame'+c+url.substring(url.lastIndexOf('.')));
+        frames.push(img);
+      }
       c++;
   }
   return frames;
@@ -53,7 +56,7 @@ const getImageDimensions = (url: string): Promise<{width: number, height: number
   });
 };
 
-export const saveMediaFile = async (file, i, updatedFiles, fps, resolution) => {
+export const saveMediaFile = async (file: File, i: number, updatedFiles: string[], fps: number, resolution: any) => {
     const fileId = crypto.randomUUID();
     await storeFile(file, fileId);
     
@@ -64,7 +67,7 @@ export const saveMediaFile = async (file, i, updatedFiles, fps, resolution) => {
     const url = URL.createObjectURL(file);
     const {width, height} = await getImageDimensions(url);
     
-    const img = {
+    const img: MediaFile = {
         id: fileId,
         fileName: file.name,
         fileId: fileId,
@@ -95,13 +98,13 @@ export const saveMediaFile = async (file, i, updatedFiles, fps, resolution) => {
 export const finetuneModel = async (images: File[], modelId: string) => {
 
   console.log("finetuneModel");
-  const hgToken = process.env.NEXT_PUBLIC_HG_TOKEN;
+  const hgToken = (process.env.NEXT_PUBLIC_HG_TOKEN as `hf_${string}`);
   //console.log(hgToken);
   
   
-  const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  const app = await Client.connect(hg_space, { hf_token: hgToken, events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
   
-  const imgs = []
+  const imgs: any[] = []
   images.forEach((img) => {
       imgs.push({"image":handle_file(img),"caption":""});
   });
@@ -127,27 +130,27 @@ export const finetuneModel = async (images: File[], modelId: string) => {
 
 
 
-export const poseTransfer = async (video: File, refFrames: File[], images: File[], modelId: string, resolution) => {
+export const poseTransfer = async (video: File | null, refFrames: File[] | null, images: any[], modelId: string | undefined, resolution: any) => {
   /*var frames = [];
   const img = await getFileFromUrl('https://tmpfiles.org/dl/9447583/41976c0d-67b0-42cc-8179-03a72f55dfac.png', 'test.png');
   frames.push(img);*/
 
   console.log("poseTransfer");
-  const hgToken = process.env.NEXT_PUBLIC_HG_TOKEN;
+  const hgToken = (process.env.NEXT_PUBLIC_HG_TOKEN as `hf_${string}`);
   //console.log(hgToken);
   
   
-  const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  const app = await Client.connect(hg_space, { hf_token: hgToken, events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
   
   
-  const imgs = [];
+  const imgs: any[] = [];
   images.forEach((img) => {
       imgs.push({"image":handle_file(img.file),"caption":""});
   });
   
   console.log(video, refFrames);
   
-  const fr = [];
+  const fr: any[] = [];
   if (refFrames) {
     [...refFrames].forEach((img) => {
         fr.push({"image":handle_file(img),"caption":""});
@@ -176,13 +179,15 @@ export const poseTransfer = async (video: File, refFrames: File[], images: File[
 
   console.log("done pose transfer");
   console.log(result);
+  
+  const data = (result.data as any)
 
   
-  const frames = await getFrames(result.data[1]);
-  const thumbnails = await getFrames(result.data[2]);
+  const frames = await getFrames(data[1]);
+  const thumbnails = await getFrames(data[2]);
   
-  const coords = result.data[3]
-  const reference = await getFrames(result.data[4]);
+  const coords = data[3]
+  const reference = await getFrames(data[4]);
   
   
   console.log(frames);
@@ -193,20 +198,20 @@ export const poseTransfer = async (video: File, refFrames: File[], images: File[
 };
 
 
-export const generateFrame = async (poses: string, images: File[], modelId: string, width, height) => {
+export const generateFrame = async (poses: any, images: any[], modelId: string | undefined, width: number | undefined, height: number | undefined) => {
   /*var frames = [];
   const img = await getFileFromUrl('https://tmpfiles.org/dl/9447583/41976c0d-67b0-42cc-8179-03a72f55dfac.png', 'test.png');
   frames.push(img);*/
 
   console.log("generateFrame");
-  const hgToken = process.env.NEXT_PUBLIC_HG_TOKEN;
+  const hgToken = (process.env.NEXT_PUBLIC_HG_TOKEN as `hf_${string}`);
   //console.log(hgToken);
   
   
-  const app = await Client.connect(hg_space, { hf_token: hgToken }, {events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  const app = await Client.connect(hg_space, { hf_token: hgToken, events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
   
   
-  const imgs = []
+  const imgs: any[] = [];
   images.forEach((img) => {
       imgs.push({"image":handle_file(img.file),"caption":""});
   });
@@ -225,9 +230,10 @@ export const generateFrame = async (poses: string, images: File[], modelId: stri
   console.log("done generateFrame");
   console.log(result);
 
+  const data = (result.data as any)
   
-  const frames = await getFrames(result.data[0]);
-  const thumbnails = await getFrames(result.data[1]);
+  const frames = await getFrames(data[0]);
+  const thumbnails = await getFrames(data[1]);
 
   //console.log(frames);
   //console.log(thumbnails)

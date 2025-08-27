@@ -6,6 +6,7 @@ const REMOTION_SAFE_FRAME = 0;
 interface SequenceItemOptions {
     handleTextChange?: (id: string, text: string) => void;
     fps: number;
+    order?: number;
     editableTextId?: string | null;
     currentTime?: number;
 }
@@ -28,6 +29,10 @@ export const SequenceItem: Record<
         const { fps, order } = options;
         
         //console.log(order);
+        if (!order) {
+            return (<></>);
+        }
+
 
         const { from, durationInFrames } = calculateFrames(
             {

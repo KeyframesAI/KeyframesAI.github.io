@@ -32,10 +32,9 @@ export default function AddCharacter() {
       </label>
 
       <CharacterEditor
-        charId=""
         isOpen={isModalOpen}
         onRequestClose={handleCloseModal}
-        contentLabel="My Modal Content"
+        contentLabel=""
       />
     </div>
   );
