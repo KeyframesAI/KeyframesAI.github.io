@@ -120,16 +120,11 @@ const createDatasets = (pose, color) => {
 
 
 
-export const PoseSequenceItem: Record<
-    string,
-    (item: any, options: SequenceItemOptions) => JSX.Element> = {
-    
-    const dispatch = useAppDispatch();
-    
-    frame: (item: MediaFile, options: SequenceItemOptions) => {
+export const PoseSequenceItem = (item: MediaFile, options: SequenceItemOptions) => {
+
         const { fps, order, pose_raw, animations, activeAnimationIndex, frame_index } = options;
         
-        
+        const dispatch = useAppDispatch();
 
         const { from, durationInFrames } = calculateFrames(
             {
@@ -319,5 +314,5 @@ export const PoseSequenceItem: Record<
                 </AbsoluteFill>
             </Sequence>
         );
-    }
+    
 };
