@@ -2,11 +2,14 @@
   "name": "keyframeai",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://keyframeai.github.io/",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "*",
@@ -52,6 +55,7 @@
     "yup": "^1.6.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.16"
+    "@types/lodash": "^4.17.16",
+    "gh-pages": "^6.3.0"
   }
 }
