@@ -35,7 +35,7 @@ const Composition = () => {
     
     //console.log(animations);
     
-    const getFrameSequenceItem = (item: MediaFile | undefined, order: number, opacity: number | undefined) => {
+    const getFrameSequenceItem = (item: MediaFile | undefined, order: number, duration: number, opacity: number | undefined) => {
     
         if (!item) return;
         const trackItem = {
@@ -47,6 +47,7 @@ const Composition = () => {
         return SequenceItem[trackItem.type](trackItem, {
             fps,
             order,
+            duration,
         });
       
     };
@@ -64,6 +65,7 @@ const Composition = () => {
         return PoseSequenceItem(trackItem, {
             fps: fps, 
             order: f.order,
+            duration: f.duration,
             pose_raw: f.pose?.body,
             animations: animations,
             activeAnimationIndex: activeAnimationIndex,
@@ -74,7 +76,30 @@ const Composition = () => {
       
     return (
         <>
+            {/* frame */}
+            {animations
+              .map((ani) => {
+                if (!ani.hidden) {
+                    return ani.frames
+                      .map((fr) => {
+                          return getFrameSequenceItem(fr.thumbnail, fr.order, fr.duration, fr.thumbnail.opacity);
+                      })
+                }
+              })
+            }
             
+            
+            {/* reference */}
+            {animations
+              .map((ani) => {
+                if (animations[activeAnimationIndex].id == ani.id && ani.referenceOpacity>0 && !ani.hidden) {
+                  return ani.frames
+                    .map((fr) => {
+                        return getFrameSequenceItem(fr.reference, fr.order, fr.duration, ani.referenceOpacity);
+                    })
+                }
+              })
+            }
             
             
             {/* onion skinning */}
@@ -92,7 +117,7 @@ const Composition = () => {
                         const opacity = (1.0 - Math.abs(layer) / (ani.onionSkinning+1)) / 2.0;
                         //console.log(opacity);
                         if (f.thumbnail.opacity) {
-                          items.push(getFrameSequenceItem(fr, f.order, f.thumbnail.opacity * opacity));
+                          items.push(getFrameSequenceItem(fr, f.order, f.duration, f.thumbnail.opacity * opacity));
                         }
                       }
                     }
@@ -100,33 +125,6 @@ const Composition = () => {
                 }
               })
             }
-        
-            {/* frame */}
-            {animations
-              .map((ani) => {
-                if (!ani.hidden) {
-                    return ani.frames
-                      .map((fr) => {
-                          return getFrameSequenceItem(fr.thumbnail, fr.order, fr.thumbnail.opacity);
-                      })
-                }
-              })
-            }
-            
-            
-            
-            {/* reference */}
-            {animations
-              .map((ani) => {
-                if (animations[activeAnimationIndex].id == ani.id && ani.referenceOpacity>0 && !ani.hidden) {
-                  return ani.frames
-                    .map((fr) => {
-                        return getFrameSequenceItem(fr.reference, fr.order, ani.referenceOpacity);
-                    })
-                }
-              })
-            }
-            
             
             
             {/* pose */}

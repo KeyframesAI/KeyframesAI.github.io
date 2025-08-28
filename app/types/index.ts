@@ -62,6 +62,7 @@ export interface Frame {
     image: MediaFile;
     thumbnail: MediaFile;
     isKeyframe: boolean;
+    duration: number;
     pose?: Pose;
     reference?: MediaFile;
 }
@@ -134,6 +135,7 @@ export interface ProjectState {
     mediaFiles: MediaFile[];
     characters: Character[];
     animations: Animation[];
+    keyframes: string[];
     textElements: TextElement[];
     filesID?: string[],
     currentTime: number;

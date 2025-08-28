@@ -8,7 +8,7 @@ import { setActiveSection } from "../../../store/slices/projectSlice";
 import AddText from '../../../components/editor/AssetsPanel/tools-section/AddText';
 import AddMedia from '../../../components/editor/AssetsPanel/AddButtons/UploadMedia';
 import CharacterList from '../../../components/editor/AssetsPanel/tools-section/CharacterList';
-import MediaList from '../../../components/editor/AssetsPanel/tools-section/MediaList';
+import KeyframesList from '../../../components/editor/AssetsPanel/tools-section/KeyframesList';
 import { useRouter } from 'next/navigation';
 import CharactersButton from "@/app/components/editor/AssetsPanel/SidebarButtons/CharactersButton";
 import LibraryButton from "@/app/components/editor/AssetsPanel/SidebarButtons/LibraryButton";
@@ -161,7 +161,7 @@ export default function Project({ params }: { params: { id: string } }) {
                             <h2 className="text-lg flex flex-row gap-2 items-center justify-center font-semibold mb-2">
                                 <AddMedia />
                             </h2>
-                            <MediaList />
+                            <KeyframesList />
                         </div>
                     )}
                     {activeSection === "export" && (

@@ -58,10 +58,13 @@ const getImageDimensions = (url: string): Promise<{width: number, height: number
 };
 
 export const saveMediaFile = async (file: File, i: number, updatedFiles: string[], fps: number, resolution: any) => {
+    
     const fileId = crypto.randomUUID();
     await storeFile(file, fileId);
-    
+  
+  
     updatedFiles.push(fileId);
+  
     //console.log('save media file');
     //console.log(updatedFiles);
     

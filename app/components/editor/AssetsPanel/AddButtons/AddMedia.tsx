@@ -51,8 +51,7 @@ export default function AddMedia({ fileId }: { fileId: string }) {
     };
 
     return (
-        <div
-        >
+        <div>
             <label
                 className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-col items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium sm:text-base py-2 px-2"
             >

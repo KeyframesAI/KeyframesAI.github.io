@@ -15,6 +15,7 @@ interface PoseSequenceItemOptions {
     handleTextChange?: (id: string, text: string) => void;
     fps: number;
     order: number,
+    duration: number,
     pose_raw: number[][] | undefined,
     animations: Animation[],
     activeAnimationIndex: number,
@@ -127,14 +128,14 @@ const createDatasets = (pose: number[][], color: string) => {
 
 export const PoseSequenceItem = (item: MediaFile, options: PoseSequenceItemOptions, frame: Frame) => {
 
-        const { fps, order, pose_raw, animations, activeAnimationIndex, frame_index } = options;
+        const { fps, order, duration, pose_raw, animations, activeAnimationIndex, frame_index } = options;
         
         const dispatch = useAppDispatch();
 
         const { from, durationInFrames } = calculateFrames(
             {
                 from: order/fps, //item.positionStart,
-                to: (order+1)/fps //item.positionEnd
+                to: (order+duration)/fps //item.positionEnd
             },
             fps
         );

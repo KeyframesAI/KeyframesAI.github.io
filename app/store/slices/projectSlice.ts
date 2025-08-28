@@ -10,6 +10,7 @@ export const initialState: ProjectState = {
     mediaFiles: [],
     characters: [],
     animations: [],
+    keyframes: [],
     textElements: [],
     currentTime: 0,
     isPlaying: false,
@@ -52,7 +53,7 @@ const calculateAnimationDuration = (
     animations: Animation[],
 ): number => {
     //const durations = animations.map(v => v.frames.length);
-    const durations = animations.map(v => Math.max(...v.frames.map(f => f.order))+1);
+    const durations = animations.map(v => Math.max(...v.frames.map(f => f.order+f.duration)));
     
     //Math.max(...animations.map(ani => ani.frames.map(fr => fr.order)));
     
@@ -81,6 +82,10 @@ const projectStateSlice = createSlice({
             state.animations = action.payload;
             
             state.duration = calculateAnimationDuration(state.animations) / state.fps;
+        },
+        setKeyframes: (state, action: PayloadAction<string[]>) => {
+            state.keyframes = action.payload;
+            
         },
         setHistory: (state, action: PayloadAction<ProjectState[]>) => {
             if (state.history.length < action.payload.length) {
@@ -171,6 +176,7 @@ export const {
     setMediaFiles,
     setCharacters,
     setAnimations,
+    setKeyframes,
     setHistory,
     setFuture,
     setTextElements,

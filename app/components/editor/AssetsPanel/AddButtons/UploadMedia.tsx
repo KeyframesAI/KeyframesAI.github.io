@@ -1,24 +1,24 @@
 "use client";
 
 import { listFiles, useAppDispatch, useAppSelector } from "../../../../store";
-import { setMediaFiles, setFilesID } from "../../../../store/slices/projectSlice";
+import { setKeyframes } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
 import { categorizeFile } from "../../../../utils/utils";
 import Image from 'next/image';
 
 export default function AddMedia() {
-    const { mediaFiles, filesID } = useAppSelector((state) => state.projectState);
+    const { mediaFiles, keyframes } = useAppSelector((state) => state.projectState);
     const dispatch = useAppDispatch();
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const newFiles = Array.from(e.target.files || []);
-        const updatedFiles = [...filesID || []];
+        const updatedFiles = [...keyframes || []];
         for (const file of newFiles) {
             const fileId = crypto.randomUUID();
             await storeFile(file, fileId);
             updatedFiles.push(fileId)
         }
-        dispatch(setFilesID(updatedFiles));
+        dispatch(setKeyframes(updatedFiles));
         e.target.value = "";
     };
 

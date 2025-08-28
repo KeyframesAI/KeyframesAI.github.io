@@ -7,6 +7,7 @@ interface SequenceItemOptions {
     handleTextChange?: (id: string, text: string) => void;
     fps: number;
     order?: number;
+    duration?: number;
     editableTextId?: string | null;
     currentTime?: number;
 }
@@ -26,10 +27,10 @@ export const SequenceItem: Record<
     (item: any, options: SequenceItemOptions) => JSX.Element> = {
     
     frame: (item: MediaFile, options: SequenceItemOptions) => {
-        const { fps, order } = options;
+        const { fps, order, duration } = options;
         
         //console.log(order);
-        if (order === null || order === undefined) {
+        if (order === null || order === undefined || duration===null || duration===undefined) {
             return (<></>);
         }
 
@@ -37,10 +38,12 @@ export const SequenceItem: Record<
         const { from, durationInFrames } = calculateFrames(
             {
                 from: order/fps, //item.positionStart,
-                to: (order+1)/fps //item.positionEnd
+                to: (order+duration)/fps //item.positionEnd
             },
             fps
         );
+        
+        //console.log(order, duration);
 
         const crop = item.crop || {
             x: 0,

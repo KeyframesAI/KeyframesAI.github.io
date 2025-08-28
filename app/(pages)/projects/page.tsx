@@ -50,6 +50,7 @@ export default function Projects() {
             mediaFiles: [],
             characters: [],
             animations: [],
+            keyframes: [],
             textElements: [],
             currentTime: 0,
             isPlaying: false,

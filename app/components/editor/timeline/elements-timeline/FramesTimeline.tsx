@@ -169,7 +169,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                               className={`absolute border border-gray-500 border-opacity-50 rounded-md top-2 h-32 rounded bg-[#27272A] text-white text-sm flex items-center justify-center cursor-pointer ${animations[activeAnimationIndex].id === ani.id && ani.frames[activeFrameIndex].id === frame.id ? 'bg-[#3F3F46] border-blue-500' : ''}`}
                               style={{
                                   left: `${frame.order * frameSize}px`,
-                                  width: `${frameSize}px`, //`${(clip.positionEnd - clip.positionStart) * timelineZoom}px`,
+                                  width: `${frame.duration * frameSize}px`, //`${(clip.positionEnd - clip.positionStart) * timelineZoom}px`,
                                   //zIndex: clip.zIndex,
                               }}
                           >

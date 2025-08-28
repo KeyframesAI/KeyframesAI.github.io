@@ -52,11 +52,42 @@ export default function FrameProperties() {
         
     };
     
+    /*
+    const onUpdateFrame2 = () => {
+        const updated = animations.map(ani => {return { ...ani, 
+            frames: ani.frames.map(fr => {return { ...fr, duration: 1 }})
+            
+        }}
+        );
+        console.log(updated);
+
+        dispatch(setAnimations(updated));
+        
+        
+    };*/
+    
     const onUpdateAnimation = (id: string, updates: Partial<Animation>) => {
         //console.log(updates);
     
         dispatch(setAnimations(animations.map(ani =>
             ani.id === id ? { ...ani, ...updates } : ani
+        )));
+    };
+    
+    
+    const onShiftFrame = (shift: number, index: number) => {
+        //console.log(shift, index);
+    
+        const updatedFrames = [...animation.frames];
+        //console.log(updatedFrames);
+        for (var i = index; i<animation.frames.length; i++) {
+            const fr = animation.frames[i];
+            updatedFrames[i] = {...fr, order: fr.order+shift};
+            //console.log(i, fr.order, updatedFrames[i].order);
+        }
+        //console.log(updatedFrames);
+        dispatch(setAnimations(animations.map(ani =>
+            ani.id === animation.id ? { ...ani, frames: updatedFrames } : ani
         )));
     };
     
@@ -143,6 +174,9 @@ export default function FrameProperties() {
     };
     
     const onDuplicateFrame = async () => {
+        //onUpdateFrame2();
+        //console.log(animations);
+        
         dispatch(setHistory(getUpdatedHistory(projectState)));
         
         const newFrame: Frame = await createDuplicateFrame(frame);
@@ -296,7 +330,7 @@ export default function FrameProperties() {
             <div className="grid grid-cols-1 gap-8">
                 
                 {/* Generate Frame */}
-                <div className="space-y-2">
+                {frame.pose && (<div className="space-y-2">
                     <label
                         onClick={() => onGenerateFrame()}
                         className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
@@ -312,7 +346,7 @@ export default function FrameProperties() {
                     </label>
                 
                     
-                </div>
+                </div>)}
                 
                 
             
@@ -330,14 +364,14 @@ export default function FrameProperties() {
                             />
                         </div>
                         
-                        <div>
+                        {frame.pose && (<div>
                             <label className="block text-sm">Show Poses</label>
                             <ToggleSwitch 
                                 label="pose" 
                                 checked={animation.showPose}
                                 onChange={(e:any) => onUpdateAnimation(animation.id, { showPose: e.target.checked })}
                             />
-                        </div>
+                        </div>)}
                         
                         <div>
                             <label className="block text-sm">Onion Skinning</label>
@@ -406,24 +440,31 @@ export default function FrameProperties() {
                         </div>
                         
                         <div>
+                            <label className="block text-sm">Frame Duration</label>
+                            <input
+                                type="number"
+                                value={frame.duration}
+                                min={1}
+                                onChange={(e:any) => {
+                                    onUpdateFrame(frame.id, { duration: Number(e.target.value) });
+                                    /*if (activeFrameIndex < animation.frames.length-1) {
+                                      onShiftFrame(Number(e.target.value)-frame.duration, activeFrameIndex+1);
+                                    }*/
+                                    
+                                }}
+                                className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
+                            />
+                        </div>
+                        
+                        <div>
                             <label className="block text-sm">Shift Frames</label>
                             <input
                                 type="number"
-                                value={activeFrameIndex == 0 ? frame.order : frame.order - animation.frames[activeFrameIndex-1].order - 1}
-                                min={0}
+                                value={activeFrameIndex == 0 ? frame.order : frame.order - (animation.frames[activeFrameIndex-1].order + animation.frames[activeFrameIndex-1].duration)}
                                 onChange={(e:any) => {
-                                    const prev = activeFrameIndex == 0 ? frame.order : frame.order - animation.frames[activeFrameIndex-1].order - 1;
-                                    const shift = e.target.value - prev;
-                                    
-                                    const updatedFrames = [...animation.frames];
-                                    for (var i = activeFrameIndex; i<animation.frames.length; i++) {
-                                        const fr = animation.frames[i];
-                                        updatedFrames[i] = {...fr, order: fr.order+shift};
-                                    }
-                                    
-                                    dispatch(setAnimations(animations.map(ani =>
-                                        ani.id === animation.id ? { ...ani, frames: updatedFrames } : ani
-                                    )));
+                                    const prev = activeFrameIndex == 0 ? frame.order : frame.order - (animation.frames[activeFrameIndex-1].order + animation.frames[activeFrameIndex-1].duration);
+                                    const shift = Number(e.target.value) - prev;
+                                    onShiftFrame(shift, activeFrameIndex);
                                 }}
                                 className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
                             />

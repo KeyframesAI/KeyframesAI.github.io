@@ -171,6 +171,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                   image: img,
                   thumbnail: thumb,
                   isKeyframe: true,
+                  duration: 1,
                   pose: newPose,
                   reference: ref_img,
               };
