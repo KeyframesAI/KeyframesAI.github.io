@@ -312,7 +312,9 @@ export default function FrameProperties() {
               };
               
               if (frame.reference) {
-                newFrame.reference = {...frame.reference, id: crypto.randomUUID()}
+                const reffile = await getFile(frame.reference.fileId);
+                const ref = await saveMediaFile(reffile, order, updatedFiles, fps, resolution);
+                newFrame.reference = ref;
               }
               
               newFrames.push(newFrame);

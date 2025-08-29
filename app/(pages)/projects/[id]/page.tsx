@@ -83,7 +83,9 @@ export default function Project({ params }: { params: { id: string } }) {
                                   var reference = null;
                                   if (frame.reference) {
                                     const ref_img = await getFile(frame.reference.fileId);
-                                    reference = { ...frame.reference, src: URL.createObjectURL(ref_img) };
+                                    if (ref_img) {
+                                      reference = { ...frame.reference, src: URL.createObjectURL(ref_img) };
+                                    }
                                   }
                                   
                                   
