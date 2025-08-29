@@ -69,7 +69,7 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
     
 
     const render = async () => {
-        if (mediaFiles.length === 0 && textElements.length === 0 && animations===0) {
+        if (mediaFiles.length === 0 && textElements.length === 0 && animations.length===0) {
             console.log('No media files to render');
             return;
         }

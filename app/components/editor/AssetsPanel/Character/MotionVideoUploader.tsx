@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { getFile, useAppDispatch, useAppSelector } from "../../../../store";
 import { setAnimations, setFilesID, setHistory } from "../../../../store/slices/projectSlice";
 import { storeFile } from "../../../../store";
-import { Character, CharacterType, Frame, Pose } from "@/app/types";
+import { Character, CharacterType, Frame, Pose, Animation } from "@/app/types";
 
 import {poseTransfer, saveMediaFile, getUpdatedHistory} from "../../../../utils/callHuggingface";
 
@@ -98,8 +98,10 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
         setSubmitting(false);
         
         var aniIndex = -1;
+        var animation: Animation|null = null;
         if (result.addToAnimation == "selected" && animations.length>0) {
           aniIndex = activeAnimationIndex;
+          animation = animations[aniIndex];
         }
         
         
@@ -120,7 +122,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           
           const updatedAnimations = [...animations || []];
           var newAnimation = null;
-          if (aniIndex == -1) {
+          if (aniIndex == -1 || !animation) {
               newAnimation = {
                   id: crypto.randomUUID(),
                   name: ch.name,
@@ -133,7 +135,7 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
                   hidden: false,
               };
           } else {
-              newAnimation = {...animations[aniIndex]};
+              newAnimation = {...animation};
           }
           
           
@@ -182,9 +184,10 @@ const MotionVideoUploader: React.FC<CustomModalProps> = ({
           }
           
           newAnimation.frames = updatedFrames;
-          if (aniIndex == -1) {
+          if (aniIndex == -1 || !animation) {
             updatedAnimations.push(newAnimation);
           } else {
+            aniIndex = animations.findIndex((c) => animation && c.id == animation.id)
             updatedAnimations[aniIndex] = newAnimation;
           }
           dispatch(setAnimations(updatedAnimations));

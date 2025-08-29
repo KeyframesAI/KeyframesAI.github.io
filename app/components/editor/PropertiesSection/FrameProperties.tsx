@@ -45,8 +45,7 @@ export default function FrameProperties() {
     const frame: Frame = animation.frames[activeFrameIndex];
     
     
-    const onUpdateFrame = (id: string, updates: Partial<Frame>) => {
-        dispatch(setHistory(getUpdatedHistory(projectState)));
+    /*const onUpdateFrame = (id: string, updates: Partial<Frame>) => {
     
         var updatedFrames = animation.frames.map(fr =>
             fr.id === id ? { ...fr, ...updates } : fr
@@ -57,7 +56,7 @@ export default function FrameProperties() {
         )));
         
         
-    };
+    };*/
     
     /*
     const onUpdateFrame2 = () => {
@@ -236,58 +235,83 @@ export default function FrameProperties() {
         
     };
     
-    const onChangeCharacterImages = async () => {
-    
+    const onChangeCharacterImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const imgFiles = Array.from(e.target.files || []).map(f => {file: f});
+        
+        const updateFrames = [];
+        for (var i = applyFrom; i<=applyTo; i++) {
+            updateFrames.push(animation.frames[i].id);
+        }
+        
+        console.log(updateFrames);
+        
+        //onGenerateFrame(frame, updateFrames, imgFiles, crypto.randomUUID());
     };
     
-    const onGenerateFrame = async () => {
+    const onGenerateFrame = async (frame: Frame, toUpdate: string[], charImages: any[], modelId: string|undefined) => {
         dispatch(setHistory(getUpdatedHistory(projectState)));
+        
+        const aniId = animation.id;
     
-        const toast_id = toast.loading('Generating frames...');
+        const toast_id = toast.loading('Updating frames...');
         
         try {
-          const character = characters.find(char => char.id === animation.character);
           
-          if (!character) {
-              throw Error("Character not found");
+          
+          
+          const poses = [];
+          for (const id of toUpdate) {
+              const fr = animation.frames.find((c) => c.id == id);
+              if (!fr || !fr.pose) {
+                  throw Error("No pose available");
+              }
+              const pose = {
+                  bodies: fr.pose.body, 
+                  body_scores: [fr.pose.body.map((coord, index) => index)], 
+                  hands: [fr.pose.hand1, fr.pose.hand2], 
+                  hands_scores: [fr.pose.hand1.map(coord => 1.0), fr.pose.hand2.map(coord => 1.0)],
+                  faces: [],
+                  faces_scores: [],
+              };
+              poses.push(pose);
           }
-          
-          if (!frame.pose) {
-              throw Error("No pose available");
-          }
-          
-          const pose = {
-              bodies: frame.pose.body, 
-              body_scores: [frame.pose.body.map((coord, index) => index)], 
-              hands: [frame.pose.hand1, frame.pose.hand2], 
-              hands_scores: [frame.pose.hand1.map(coord => 1.0), frame.pose.hand2.map(coord => 1.0)],
-              faces: [],
-              faces_scores: [],
-          };
           /*
           body: pose["bodies"][0],
           hand1: pose["hands"][0],
           hand2: pose["hands"][1],
           */
           
-          const [frames, thumbnails] = await generateFrame(JSON.stringify([pose]), character.images, character.modelId, frame.image.crop?.width, frame.image.crop?.height);
+          const [frames, thumbnails] = await generateFrame(JSON.stringify(poses), charImages, modelId, frame.image.crop?.width, frame.image.crop?.height);
           //console.log(frames)
           
-          const updatedFiles = [...filesID || []];
-          const img = await saveMediaFile(frames[0], activeFrameIndex, updatedFiles, fps, resolution);
-          const thumb = await saveMediaFile(thumbnails[0], activeFrameIndex, updatedFiles, fps, resolution);
+          var updatedFiles = [...filesID || []];
+          
+          var updatedFrames = [...animation.frames];
+          
+          for (var i = 0; i<toUpdate.length; i++) {
+              const img = await saveMediaFile(frames[i], frame.order, updatedFiles, fps, resolution);
+              const thumb = await saveMediaFile(thumbnails[i], frame.order, updatedFiles, fps, resolution);
+              
+              updatedFrames = updatedFrames.map(fr =>
+                  fr.id === toUpdate[i] ? { ...fr, image: img, thumbnail: thumb } : fr
+              );
+          }
+          
+          dispatch(setAnimations(animations.map(ani =>
+              ani.id === aniId ? { ...ani, frames: updatedFrames } : ani
+          )));
           
           dispatch(setFilesID(updatedFiles));
-          onUpdateFrame(frame.id, {image: img, thumbnail: thumb});
+          //onUpdateFrame(updateIds[0], {image: img, thumbnail: thumb});
           
-          toast.success('Frames generated successfully.', { id: toast_id });
+          toast.success('Frames updated successfully.', { id: toast_id });
         } catch(err) {
-          toast.error('Error generating the frame', { id: toast_id });
+          toast.error('Error regenerating the frames', { id: toast_id });
           throw err;
         }
     };
     
-    const onInterpolateFrame = async () => {
+    const onInterpolateFrame = async (frame: Frame) => {
         dispatch(setHistory(getUpdatedHistory(projectState)));
         
         const toast_id = toast.loading('Interpolating frames...');
@@ -333,11 +357,13 @@ export default function FrameProperties() {
               c++;
           }
           
+          const frameIndex = animation.frames.findIndex((c) => c.id == frame.id);
+          
           const updatedFrames = [...animation.frames];
-          for (var i = activeFrameIndex+1; i<updatedFrames.length; i++) {
+          for (var i = frameIndex+1; i<updatedFrames.length; i++) {
               updatedFrames[i] = {...updatedFrames[i], order: updatedFrames[i].order+c};
           }
-          updatedFrames.splice(activeFrameIndex+1, 0, ...newFrames);
+          updatedFrames.splice(frameIndex+1, 0, ...newFrames);
           
           console.log(updatedFrames);
           
@@ -422,7 +448,12 @@ export default function FrameProperties() {
                   <>
                     <div className="space-y-2">
                         <label
-                            onClick={() => onGenerateFrame()}
+                            onClick={() => {
+                                const character = characters.find(char => char.id === animation.character);
+                                if (character) {
+                                    onGenerateFrame(frame, [frame.id], character.images, character.modelId);
+                                }
+                            }}
                             className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
                         >
                             <Image
@@ -432,14 +463,14 @@ export default function FrameProperties() {
                                 width={24}
                                 src="https://www.svgrepo.com/show/506366/wand.svg"
                             />
-                            <span className="text-sm">Generate Frame</span>
+                            <span className="text-sm">Update Pose</span>
                         </label>
                     
                         
                     </div>
                     
                     <div className="space-y-2">
-                        <h4 className="font-semibold">Change Character Images</h4>
+                        <h4 className="font-semibold">Change Character Reference Images</h4>
                         <div className="flex items-center space-x-4">
                             <div style={{width: '30%'}}>
                                 <label className="block text-sm">From</label>
@@ -465,7 +496,7 @@ export default function FrameProperties() {
                             
                             <div className="space-y-2">
                                 <label
-                                    onClick={() => onChangeCharacterImages()}
+                                    htmlFor="file-upload"
                                     className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
                                 >
                                     <Image
@@ -478,7 +509,14 @@ export default function FrameProperties() {
                                     <span className="text-sm"> Change </span>
                                 </label>
                             
-                                
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={onChangeCharacterImages}
+                                    className="hidden"
+                                    id="file-upload"
+                                />
                             </div>
                     
                         </div>
@@ -490,7 +528,7 @@ export default function FrameProperties() {
                 {!frame.pose && (<div className="space-y-2">
                       
                       <label
-                          onClick={() => onInterpolateFrame()}
+                          onClick={() => onInterpolateFrame(frame)}
                           className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
                       >
                           <Image
@@ -553,8 +591,8 @@ export default function FrameProperties() {
                             />
                         </div>
                         
-                        <div>
-                            <label className="block text-sm">Reference Frame Opacity</label>
+                        {frame.pose && (<div>
+                            <label className="block text-sm">Pose Reference Frame Opacity</label>
                             <input
                                 type="range"
                                 min="0"
@@ -563,7 +601,7 @@ export default function FrameProperties() {
                                 onChange={(e:any) => onUpdateAnimation(animation.id, { referenceOpacity: Number(e.target.value) })}
                                 className="w-full bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:border-white-500"
                             />
-                        </div>
+                        </div>)}
                         
                         
                         <div>
