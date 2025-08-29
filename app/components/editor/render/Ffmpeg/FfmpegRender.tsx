@@ -16,7 +16,7 @@ interface FileUploaderProps {
     logMessages: string;
 }
 export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMessages }: FileUploaderProps) {
-    const { mediaFiles, projectName, exportSettings, duration, textElements } = useAppSelector(state => state.projectState);
+    const { mediaFiles, animations, fps, projectName, exportSettings, duration, textElements } = useAppSelector(state => state.projectState);
     const totalDuration = duration;
     const videoRef = useRef<HTMLVideoElement>(null);
     const [loaded, setLoaded] = useState(false);
@@ -40,9 +40,36 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
             console.error("Failed to reset FFmpeg:", e);
         }
     };
+    
+    const getAnimationFiles = () => {
+        const media = [];
+        
+        var layer = 1;
+        for (const ani of animations) {
+            if (ani.hidden) {
+              continue;
+            }
+            
+            for (const fr of ani.frames) {
+                const img = {...fr.image, 
+                    type: 'image', 
+                    zIndex: layer, 
+                    startTime: fr.order/fps, 
+                    positionStart: fr.order/fps, 
+                    positionEnd: (fr.order+fr.duration)/fps,
+                    opacity: fr.thumbnail.opacity,
+                };
+                media.push(img);
+            }
+            layer++;
+        }
+        
+        return media;
+    };
+    
 
     const render = async () => {
-        if (mediaFiles.length === 0 && textElements.length === 0) {
+        if (mediaFiles.length === 0 && textElements.length === 0 && animations===0) {
             console.log('No media files to render');
             return;
         }
@@ -61,7 +88,10 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
                 // Create base black background
                 filters.push(`color=c=black:size=1920x1080:d=${totalDuration.toFixed(3)}[base]`);
                 // Sort videos by zIndex ascending (lowest drawn first)
-                const sortedMediaFiles = [...mediaFiles].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+                //const sortedMediaFiles = [...mediaFiles].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+                const animationFiles = getAnimationFiles();
+                const sortedMediaFiles = [...animationFiles].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+                console.log(sortedMediaFiles);
 
                 for (let i = 0; i < sortedMediaFiles.length; i++) {
 
@@ -239,7 +269,7 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
             <button
                 onClick={() => render()}
                 className={`inline-flex items-center p-3 bg-white hover:bg-[#ccc] rounded-lg disabled:opacity-50 text-gray-900 font-bold transition-all transform`}
-                disabled={(!loadFfmpeg || isRendering || (mediaFiles.length === 0 && textElements.length === 0))}
+                disabled={(!loadFfmpeg || isRendering || (animations.length===0 && mediaFiles.length === 0 && textElements.length === 0))}
             >
                 {(!loadFfmpeg || isRendering) && <span className="animate-spin mr-2">
                     <svg

@@ -28,10 +28,14 @@ export default function FrameProperties() {
     
     const [deleteFrom, setDeleteFrom] = useState(activeFrameIndex);
     const [deleteTo, setDeleteTo] = useState(activeFrameIndex);
+    const [applyFrom, setApplyFrom] = useState(activeFrameIndex);
+    const [applyTo, setApplyTo] = useState(activeFrameIndex);
     const [interpTimes, setInterpTimes] = useState(activeFrameIndex);
     useEffect(() => {
         setDeleteFrom(activeFrameIndex);
         setDeleteTo(activeFrameIndex);
+        setApplyFrom(activeFrameIndex);
+        setApplyTo(activeFrameIndex);
         setInterpTimes(1);
 
     }, [activeFrameIndex]);
@@ -78,10 +82,15 @@ export default function FrameProperties() {
     };
     
     
-    const onShiftFrame = (shift: number, index: number) => {
+    const onShiftFrame = (shift: number, index: number, duration: number | null = null) => {
         //console.log(shift, index);
     
         const updatedFrames = [...animation.frames];
+        
+        if (duration) {
+          updatedFrames[activeFrameIndex] = {...updatedFrames[activeFrameIndex], duration: duration};
+        }
+        
         //console.log(updatedFrames);
         for (var i = index; i<animation.frames.length; i++) {
             const fr = animation.frames[i];
@@ -227,7 +236,9 @@ export default function FrameProperties() {
         
     };
     
+    const onChangeCharacterImages = async () => {
     
+    };
     
     const onGenerateFrame = async () => {
         dispatch(setHistory(getUpdatedHistory(projectState)));
@@ -407,38 +418,77 @@ export default function FrameProperties() {
             <div className="grid grid-cols-1 gap-8">
                 
                 {/* Generate Frame */}
-                {frame.pose && (<div className="space-y-2">
-                    <label
-                        onClick={() => onGenerateFrame()}
-                        className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
-                    >
-                        <Image
-                            alt="Add Project"
-                            className="Black"
-                            height={24}
-                            width={24}
-                            src="https://www.svgrepo.com/show/506366/wand.svg"
-                        />
-                        <span className="text-sm">Generate Frame</span>
-                    </label>
-                
+                {frame.pose && (
+                  <>
+                    <div className="space-y-2">
+                        <label
+                            onClick={() => onGenerateFrame()}
+                            className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                        >
+                            <Image
+                                alt="Add Project"
+                                className="Black"
+                                height={24}
+                                width={24}
+                                src="https://www.svgrepo.com/show/506366/wand.svg"
+                            />
+                            <span className="text-sm">Generate Frame</span>
+                        </label>
                     
-                </div>)}
+                        
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <h4 className="font-semibold">Change Character Images</h4>
+                        <div className="flex items-center space-x-4">
+                            <div style={{width: '30%'}}>
+                                <label className="block text-sm">From</label>
+                                <input
+                                    type="number"
+                                    value={applyFrom}
+                                    min={0}
+                                    onChange={(e:any) => setApplyFrom(e.target.value)}
+                                    className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
+                                />
+                            </div>
+                            <div style={{width: '30%'}}>
+                                <label className="block text-sm">To</label>
+                                <input
+                                    type="number"
+                                    value={applyTo}
+                                    min={0}
+                                    max={animation.frames.length-1}
+                                    onChange={(e:any) => setApplyTo(e.target.value)}
+                                    className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
+                                />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label
+                                    onClick={() => onChangeCharacterImages()}
+                                    className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                                >
+                                    <Image
+                                        alt="Add Project"
+                                        className="Black"
+                                        height={24}
+                                        width={24}
+                                        src="https://www.svgrepo.com/show/506366/wand.svg"
+                                    />
+                                    <span className="text-sm"> Change </span>
+                                </label>
+                            
+                                
+                            </div>
+                    
+                        </div>
+                    </div>
+                  </>
+                )}
                 
                 {/* Interpolate Frame */}
                 {!frame.pose && (<div className="space-y-2">
-                  <div className="flex items-center space-x-4">
-                      <div>
-                          <label className="block text-sm">Times to Interpolate</label>
-                          <input
-                              type="number"
-                              value={interpTimes}
-                              min={1}
-                              onChange={(e:any) => setInterpTimes(e.target.value)}
-                              className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
-                          />
-                      </div>
-                          
+                      
                       <label
                           onClick={() => onInterpolateFrame()}
                           className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
@@ -452,8 +502,18 @@ export default function FrameProperties() {
                           />
                           <span className="text-sm">Interpolate Frames</span>
                       </label>
-                
-                  </div>  
+                      
+                      <div>
+                          <label className="block text-sm">Times to Interpolate</label>
+                          <input
+                              type="number"
+                              value={interpTimes}
+                              min={1}
+                              onChange={(e:any) => setInterpTimes(e.target.value)}
+                              className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
+                          />
+                      </div>
+                      
                 </div>)}
                 
                 
@@ -554,9 +614,11 @@ export default function FrameProperties() {
                                 value={frame.duration}
                                 min={1}
                                 onChange={(e:any) => {
-                                    onUpdateFrame(frame.id, { duration: Number(e.target.value) });
+                                    onShiftFrame(Number(e.target.value)-frame.duration, activeFrameIndex+1, Number(e.target.value));
+                                    
+                                    //onUpdateFrame(frame.id, { duration: Number(e.target.value) });
                                     /*if (activeFrameIndex < animation.frames.length-1) {
-                                      onShiftFrame(Number(e.target.value)-frame.duration, activeFrameIndex+1);
+                                      
                                     }*/
                                     
                                 }}
@@ -592,7 +654,7 @@ export default function FrameProperties() {
                 <div className="space-y-2">
                     <h4 className="font-semibold">Delete Frames</h4>
                     <div className="flex items-center space-x-4">
-                        <div>
+                        <div style={{width: '30%'}}>
                             <label className="block text-sm">From</label>
                             <input
                                 type="number"
@@ -602,7 +664,7 @@ export default function FrameProperties() {
                                 className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
                             />
                         </div>
-                        <div>
+                        <div style={{width: '30%'}}>
                             <label className="block text-sm">To</label>
                             <input
                                 type="number"
