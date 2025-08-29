@@ -15,8 +15,9 @@ import { Scatter } from "react-chartjs-2";
 import "chartjs-plugin-dragdata";
 import "chart.js/auto";
 
-import {generateFrame, saveMediaFile, getUpdatedHistory} from "../../../utils/callHuggingface";
+import {generateFrame, interpolateFrames, saveMediaFile, getUpdatedHistory} from "../../../utils/callHuggingface";
 
+const zipArrays = (...arr: any[]) => Array.from({ length: Math.max(...arr.map(a => a.length)) }, (_, i) => arr.map(a => a[i]));
 
 export default function FrameProperties() {
     const projectState = useAppSelector((state) => state.projectState);
@@ -27,9 +28,11 @@ export default function FrameProperties() {
     
     const [deleteFrom, setDeleteFrom] = useState(activeFrameIndex);
     const [deleteTo, setDeleteTo] = useState(activeFrameIndex);
+    const [interpTimes, setInterpTimes] = useState(activeFrameIndex);
     useEffect(() => {
         setDeleteFrom(activeFrameIndex);
         setDeleteTo(activeFrameIndex);
+        setInterpTimes(1);
 
     }, [activeFrameIndex]);
     
@@ -143,6 +146,11 @@ export default function FrameProperties() {
           dispatch(setAnimations(animations.map(ani =>
               ani.id === animation.id ? { ...ani, frames: updated } : ani
           )));
+          
+          if (updated.length == 0) {
+              dispatch(setAnimations(animations.filter(f => f.id !== animation.id)));
+              dispatch(setActiveAnimationIndex(0));
+          }
         }
         
         
@@ -222,7 +230,7 @@ export default function FrameProperties() {
     
     
     const onGenerateFrame = async () => {
-        
+        dispatch(setHistory(getUpdatedHistory(projectState)));
     
         const toast_id = toast.loading('Generating frames...');
         
@@ -263,7 +271,74 @@ export default function FrameProperties() {
           
           toast.success('Frames generated successfully.', { id: toast_id });
         } catch(err) {
-          toast.error('Error generating the animation', { id: toast_id });
+          toast.error('Error generating the frame', { id: toast_id });
+          throw err;
+        }
+    };
+    
+    const onInterpolateFrame = async () => {
+        dispatch(setHistory(getUpdatedHistory(projectState)));
+        
+        const toast_id = toast.loading('Interpolating frames...');
+        
+        try {
+          if (activeFrameIndex >= animation.frames.length-1) {
+              throw Error("Nothing to interpolate");
+          }
+          
+          const [frames, thumbnails] = await interpolateFrames(frame.image, animation.frames[activeFrameIndex+1].image, interpTimes);
+          //console.log(frames)
+          const frames_zipped = zipArrays(frames, thumbnails);
+          
+          const updatedFiles = [...filesID || []];
+          
+          var c = 0;
+          const newFrames = [];
+          for (const f of frames_zipped) {
+              const frameId = crypto.randomUUID();
+              const order = frame.order+c+1;
+              
+              const img = await saveMediaFile(f[0], order, updatedFiles, fps, resolution);
+              const thumb = await saveMediaFile(f[1], order, updatedFiles, fps, resolution);
+              
+              
+              const newFrame: Frame = {
+                  id: frameId,
+                  order: order,
+                  image: img,
+                  thumbnail: thumb,
+                  isKeyframe: true,
+                  duration: 1,
+              };
+              
+              if (frame.reference) {
+                newFrame.reference = {...frame.reference, id: crypto.randomUUID()}
+              }
+              
+              newFrames.push(newFrame);
+              
+              c++;
+          }
+          
+          const updatedFrames = [...animation.frames];
+          for (var i = activeFrameIndex+1; i<updatedFrames.length; i++) {
+              updatedFrames[i] = {...updatedFrames[i], order: updatedFrames[i].order+c};
+          }
+          updatedFrames.splice(activeFrameIndex+1, 0, ...newFrames);
+          
+          console.log(updatedFrames);
+          
+          
+          dispatch(setFilesID(updatedFiles));
+          
+          dispatch(setAnimations(animations.map(ani =>
+              ani.id === animation.id ? { ...ani, frames: updatedFrames } : ani
+          )));
+          
+          
+          toast.success('Frames interpolated successfully.', { id: toast_id });
+        } catch(err) {
+          toast.error('Error interpolating the frames', { id: toast_id });
           throw err;
         }
     };
@@ -346,6 +421,37 @@ export default function FrameProperties() {
                     </label>
                 
                     
+                </div>)}
+                
+                {/* Interpolate Frame */}
+                {!frame.pose && (<div className="space-y-2">
+                  <div className="flex items-center space-x-4">
+                      <div>
+                          <label className="block text-sm">Times to Interpolate</label>
+                          <input
+                              type="number"
+                              value={interpTimes}
+                              min={1}
+                              onChange={(e:any) => setInterpTimes(e.target.value)}
+                              className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
+                          />
+                      </div>
+                          
+                      <label
+                          onClick={() => onInterpolateFrame()}
+                          className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                      >
+                          <Image
+                              alt="Add Project"
+                              className="Black"
+                              height={24}
+                              width={24}
+                              src="https://www.svgrepo.com/show/506366/wand.svg"
+                          />
+                          <span className="text-sm">Interpolate Frames</span>
+                      </label>
+                
+                  </div>  
                 </div>)}
                 
                 

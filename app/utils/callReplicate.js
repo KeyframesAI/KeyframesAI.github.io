@@ -2,7 +2,20 @@ import { writeFile } from "fs/promises";
 import Replicate from "replicate";
 
 
-export const interpolateFILM = async (images) => {
+async function getFileFromUrl(url, name, defaultType = 'image/png'){
+
+  //console.log(url);
+  const response = await fetch(url);
+  //console.log(response);
+  
+  const data = await response.blob();
+  return new File([data], name, {
+    type: data.type || defaultType,
+  });
+  
+}
+
+export const interpolateFILM = async (img1, img2) => {
 
     const replicate = new Replicate();
 
@@ -16,9 +29,10 @@ export const interpolateFILM = async (images) => {
 
     // To access the file URL:
     console.log(output.url());
+    console.log(output);
     //=> "https://replicate.delivery/.../output"
 
     // To write the file to disk:
-    await writeFile("output", output);
+    //await writeFile("output", output);
     //=> output written to disk
 };

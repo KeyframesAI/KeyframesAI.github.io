@@ -88,6 +88,12 @@ export const Timeline = () => {
           dispatch(setAnimations(animations.map(ani =>
               ani.id === animation.id ? { ...ani, frames: updated } : ani
           )));
+          
+          if (updated.length == 0) {
+              dispatch(setAnimations(animations.filter(f => f.id !== animation.id)));
+              dispatch(setActiveAnimationIndex(0));
+          }
+          
         }
         console.log(animation);
         
@@ -177,6 +183,19 @@ export const Timeline = () => {
         <div className="flex w-full flex-col gap-2">
             <div className="flex flex-row items-center justify-between gap-12 w-full">
                 <div className="flex flex-row items-center gap-2">
+                    <button
+                        onClick={onDeleteFrame}
+                        className="bg-white border rounded-md border-transparent transition-colors flex flex-row items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] mt-2 font-medium text-sm sm:text-base h-auto px-2 py-1 sm:w-auto"
+                    >
+                        <Image
+                            alt="cut"
+                            className="h-auto w-auto max-w-[20px] max-h-[20px]"
+                            height={30}
+                            width={30}
+                            src="https://www.svgrepo.com/show/502614/delete.svg"
+                        />
+                        <span className="ml-2">Delete Frame</span>
+                    </button>
                     
                     <button
                         onClick={handleUndo}

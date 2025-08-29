@@ -59,6 +59,11 @@ export default function KeyframesList() {
     };
     
     const addToAnimation = async (fileId: string, index: number, order: number) => {
+        if (index!=-1 && animations.length==0) {
+            await addToNewAnimation(fileId);
+            return [];
+        }
+    
         const file = await getFile(fileId);
         const updatedFiles = [...filesID || []];
         
@@ -137,7 +142,7 @@ export default function KeyframesList() {
                                 <div className="flex items-center space-x-2 flex-1 min-w-0">
                                     
                                 
-                                    <div>
+                                    <div title="Add to New Layer">
                                         <label
                                             className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-col items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium sm:text-base py-2 px-2"
                                         >
@@ -157,7 +162,7 @@ export default function KeyframesList() {
                                     </div>
                                     
                                     
-                                    <div>
+                                    <div title="Add to Selected Layer">
                                         <label
                                             className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-col items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium sm:text-base py-2 px-2"
                                         >

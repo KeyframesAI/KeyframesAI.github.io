@@ -94,6 +94,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
         
         const activeId = frames[frameIndex].id;
         frames[frameIndex] = {...frames[frameIndex], order: newOrder};
+        
         frames.sort((a, b) => a.order - b.order);
         
         const newIndex = frames.findIndex(fr => fr.id === activeId);

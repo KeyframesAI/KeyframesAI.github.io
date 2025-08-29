@@ -2,7 +2,7 @@
 
 //import React from "react";
 import { Client, handle_file } from "@gradio/client";
-import { storeFile, deleteFile } from "../store";
+import { storeFile, deleteFile, getFile } from "../store";
 import { MediaFile, Frame, ProjectState } from "@/app/types";
 
 
@@ -122,7 +122,7 @@ export const getUpdatedHistory = (state: ProjectState, deleted: string[] = []) =
         }
     }
     
-    console.log(updatedHistory);
+    //console.log(updatedHistory);
     
     return updatedHistory;
 };
@@ -273,6 +273,42 @@ export const generateFrame = async (poses: any, images: any[], modelId: string |
 
   return [frames, thumbnails];
 };
+
+
+export const interpolateFrames = async (frame1: MediaFile, frame2: MediaFile, times_to_interp: number) => {
+
+  console.log("interpolateFrames");
+  const hgToken = (process.env.NEXT_PUBLIC_HG_TOKEN as `hf_${string}`);
+  //console.log(hgToken);
+  
+  
+  const app = await Client.connect(hg_space, { hf_token: hgToken, events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  
+  
+  const img1 = await getFile(frame1.id);
+  const img2 = await getFile(frame2.id);
+  //console.log(img1, img2);
+  
+  const result = await app.predict("/run_interpolate_frames", { 		
+      frame1: handle_file(img1),
+      frame2: handle_file(img2),
+      times_to_interp: times_to_interp,
+  });
+
+  console.log("done interpolateFrames");
+  console.log(result);
+
+  const data = (result.data as any)
+  
+  const frames = await getFrames(data[0]);
+  const thumbnails = await getFrames(data[1]);
+
+  //console.log(frames);
+  //console.log(thumbnails)
+
+  return [frames, thumbnails];
+};
+
 
 
 
