@@ -157,7 +157,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
               {frames
                   .filter(frame => frame.isKeyframe === true && frame.thumbnail)
                   .map((frame, frameIndex) => (
-                      <div key={frame.id} className="bg-green-500">
+                      <div key={frame.id} className="bg-green-500" title={"Frame "+frameIndex}>
                           <div
                               key={frame.id}
                               ref={(el: HTMLDivElement | null) => {
@@ -176,7 +176,7 @@ export default function FramesTimeline({ aniId }: { aniId: string }) {
                           >
                               {/* <MoveableTimeline /> */}
                               <Image
-                                  alt="Image"
+                                  alt={"Frame "+frameIndex}
                                   className="max-h-32 max-w-32 min-w-6 flex-shrink-0"
                                   height={frameSize}
                                   width={frameSize}

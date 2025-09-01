@@ -236,7 +236,22 @@ export default function FrameProperties() {
     };
     
     const onChangeCharacterImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const imgFiles = Array.from(e.target.files || []).map(f => {file: f});
+        const uploadedFiles = Array.from(e.target.files || []);
+        console.log(e.target);
+        if (uploadedFiles.length==0) {
+            return;
+        }
+        const imgFiles = uploadedFiles.map(f => {return {file: f}});
+        e.target.value = "";
+        e.target.files = new FileList();
+        
+        const character = characters.find(char => char.id === animation.character);
+        if (character) {
+            imgFiles.unshift(character.images[0]);
+        }
+        
+        
+        console.log(imgFiles);
         
         const updateFrames = [];
         for (var i = applyFrom; i<=applyTo; i++) {
@@ -245,7 +260,7 @@ export default function FrameProperties() {
         
         console.log(updateFrames);
         
-        //onGenerateFrame(frame, updateFrames, imgFiles, crypto.randomUUID());
+        onGenerateFrame(frame, updateFrames, imgFiles, crypto.randomUUID());
     };
     
     const onGenerateFrame = async (frame: Frame, toUpdate: string[], charImages: any[], modelId: string|undefined) => {
@@ -257,7 +272,9 @@ export default function FrameProperties() {
         
         try {
           
-          
+          if (!frame.reference) {
+              throw Error("No reference image");
+          }
           
           const poses = [];
           for (const id of toUpdate) {
@@ -281,7 +298,7 @@ export default function FrameProperties() {
           hand2: pose["hands"][1],
           */
           
-          const [frames, thumbnails] = await generateFrame(JSON.stringify(poses), charImages, modelId, frame.image.crop?.width, frame.image.crop?.height);
+          const [frames, thumbnails] = await generateFrame(JSON.stringify(poses), charImages, modelId, frame.reference.width, frame.reference.height);
           //console.log(frames)
           
           var updatedFiles = [...filesID || []];
@@ -494,38 +511,39 @@ export default function FrameProperties() {
                                 />
                             </div>
                             
-                            <div className="space-y-2">
-                                <label
-                                    htmlFor="file-upload"
-                                    className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
-                                >
-                                    <Image
-                                        alt="Add Project"
-                                        className="Black"
-                                        height={24}
-                                        width={24}
-                                        src="https://www.svgrepo.com/show/506366/wand.svg"
-                                    />
-                                    <span className="text-sm"> Change </span>
-                                </label>
                             
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={onChangeCharacterImages}
-                                    className="hidden"
-                                    id="file-upload"
-                                />
-                            </div>
                     
+                        </div>
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="file-upload"
+                                className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                            >
+                                <Image
+                                    alt="Add Project"
+                                    className="Black"
+                                    height={24}
+                                    width={24}
+                                    src="https://www.svgrepo.com/show/506366/wand.svg"
+                                />
+                                <span className="text-sm"> Change </span>
+                            </label>
+                        
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={onChangeCharacterImages}
+                                className="hidden"
+                                id="file-upload"
+                            />
                         </div>
                     </div>
                   </>
                 )}
                 
                 {/* Interpolate Frame */}
-                {!frame.pose && (<div className="space-y-2">
+                {(<div className="space-y-2">
                       
                       <label
                           onClick={() => onInterpolateFrame(frame)}

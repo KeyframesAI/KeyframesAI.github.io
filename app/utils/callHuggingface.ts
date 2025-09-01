@@ -152,6 +152,7 @@ export const finetuneModel = async (images: File[], modelId: string) => {
       ],*/
       train_steps: train_steps, 		
       modelId: modelId, 
+      resize_inputs: false,
   });
 
 
