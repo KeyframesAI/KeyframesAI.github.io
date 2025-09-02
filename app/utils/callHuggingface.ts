@@ -276,7 +276,7 @@ export const generateFrame = async (poses: any, images: any[], modelId: string |
 };
 
 
-export const interpolateFrames = async (frame1: MediaFile, frame2: MediaFile, times_to_interp: number) => {
+export const interpolateFrames = async (frame1: MediaFile, frame2: MediaFile, times_to_interp: number, removebg: boolean) => {
 
   console.log("interpolateFrames");
   const hgToken = (process.env.NEXT_PUBLIC_HG_TOKEN as `hf_${string}`);
@@ -294,6 +294,7 @@ export const interpolateFrames = async (frame1: MediaFile, frame2: MediaFile, ti
       frame1: handle_file(img1),
       frame2: handle_file(img2),
       times_to_interp: times_to_interp,
+      remove_bg: removebg,
   });
 
   console.log("done interpolateFrames");

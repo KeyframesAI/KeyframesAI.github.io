@@ -235,7 +235,37 @@ export default function FrameProperties() {
         
     };
     
+    const onReplaceFrame = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        dispatch(setHistory(getUpdatedHistory(projectState)));
+        
+        console.log('onReplaceFrame');
+        
+        const uploadedFiles = Array.from(e.target.files || []);
+        console.log(e.target);
+        if (uploadedFiles.length!=1) {
+            return;
+        }
+        e.target.value = "";
+        e.target.files = null;
+        
+        var updatedFiles = [...filesID || []];
+        const img = await saveMediaFile(uploadedFiles[0], frame.order, updatedFiles, fps, resolution);
+        
+        const updatedFrames = [...animation.frames].map(fr =>
+            fr.id === frame.id ? { ...fr, image: img, thumbnail: img } : fr
+        );
+        
+        dispatch(setFilesID(updatedFiles));
+          
+        dispatch(setAnimations(animations.map(ani =>
+            ani.id === animation.id ? { ...ani, frames: updatedFrames } : ani
+        )));
+        
+    };
+    
     const onChangeCharacterImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.log('onChangeCharacterImages');
+        
         const uploadedFiles = Array.from(e.target.files || []);
         console.log(e.target);
         if (uploadedFiles.length==0) {
@@ -243,7 +273,7 @@ export default function FrameProperties() {
         }
         const imgFiles = uploadedFiles.map(f => {return {file: f}});
         e.target.value = "";
-        e.target.files = new FileList();
+        e.target.files = null;
         
         const character = characters.find(char => char.id === animation.character);
         if (character) {
@@ -265,6 +295,8 @@ export default function FrameProperties() {
     
     const onGenerateFrame = async (frame: Frame, toUpdate: string[], charImages: any[], modelId: string|undefined) => {
         dispatch(setHistory(getUpdatedHistory(projectState)));
+        
+        console.log('onGenerateFrame');
         
         const aniId = animation.id;
     
@@ -338,7 +370,9 @@ export default function FrameProperties() {
               throw Error("Nothing to interpolate");
           }
           
-          const [frames, thumbnails] = await interpolateFrames(frame.image, animation.frames[activeFrameIndex+1].image, interpTimes);
+          const removebg = frame.pose != null;
+          
+          const [frames, thumbnails] = await interpolateFrames(frame.image, animation.frames[activeFrameIndex+1].image, interpTimes, removebg);
           //console.log(frames)
           const frames_zipped = zipArrays(frames, thumbnails);
           
@@ -565,6 +599,7 @@ export default function FrameProperties() {
                               type="number"
                               value={interpTimes}
                               min={1}
+                              max={8}
                               onChange={(e:any) => setInterpTimes(e.target.value)}
                               className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
                           />
@@ -572,6 +607,48 @@ export default function FrameProperties() {
                       
                 </div>)}
                 
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-4">
+                    <a href={frame.image.src} download={frame.image.src}>
+                      <label
+                          className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                      >
+                          <Image
+                              alt="Add Project"
+                              className="Black"
+                              height={24}
+                              width={24}
+                              src="https://www.svgrepo.com/show/528952/download.svg"
+                          />
+                          <span className="text-sm">Download Frame</span>
+                      </label>
+                    </a>
+                    
+                    
+                    <label
+                        htmlFor="file-upload2"
+                        className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                    >
+                        <Image
+                            alt="Add Project"
+                            className="Black"
+                            height={24}
+                            width={24}
+                            src="https://www.svgrepo.com/show/529274/upload.svg"
+                        />
+                        <span className="text-sm">Replace Frame </span>
+                    </label>
+                
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={onReplaceFrame}
+                        className="hidden"
+                        id="file-upload2"
+                    />
+                  </div>  
+                </div>
                 
             
                 <div className="space-y-6">
