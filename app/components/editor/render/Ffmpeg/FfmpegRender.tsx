@@ -1,13 +1,16 @@
 'use client'
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { useEffect, useRef, useState } from "react";
-import { getFile, useAppSelector } from "@/app/store";
+import { getFile, storeFile, useAppSelector, useAppDispatch } from "@/app/store";
+import { setFilesID } from "@/app/store/slices/projectSlice";
 import { Heart } from "lucide-react";
 import Image from "next/image";
 import { extractConfigs } from "@/app/utils/extractConfigs";
-import { mimeToExt } from "@/app/types";
+import { mimeToExt, MediaFile } from "@/app/types";
 import { toast } from "react-hot-toast";
 import FfmpegProgressBar from "./ProgressBar";
+
+import {resizeFrames} from "../../../../utils/callHuggingface";
 
 interface FileUploaderProps {
     loadFunction: () => Promise<void>;
@@ -16,7 +19,8 @@ interface FileUploaderProps {
     logMessages: string;
 }
 export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMessages }: FileUploaderProps) {
-    const { mediaFiles, animations, fps, projectName, exportSettings, duration, textElements } = useAppSelector(state => state.projectState);
+    const { mediaFiles, animations, fps, resolution, projectName, exportSettings, duration, textElements, filesID } = useAppSelector(state => state.projectState);
+    const dispatch = useAppDispatch();
     const totalDuration = duration;
     const videoRef = useRef<HTMLVideoElement>(null);
     const [loaded, setLoaded] = useState(false);
@@ -41,7 +45,9 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
         }
     };
     
-    const getAnimationFiles = () => {
+    const zipArrays = (...arr: any[]) => Array.from({ length: Math.max(...arr.map(a => a.length)) }, (_, i) => arr.map(a => a[i]));
+    
+    const getAnimationFiles = async () => {
         const media = [];
         
         var layer = 1;
@@ -51,20 +57,38 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
             }
             
             for (const fr of ani.frames) {
-                const img = {...fr.image, 
+                const img: MediaFile = {...fr.image, 
                     type: 'image', 
                     zIndex: layer, 
                     startTime: fr.order/fps, 
                     positionStart: fr.order/fps, 
                     positionEnd: (fr.order+fr.duration)/fps,
                     opacity: fr.thumbnail.opacity,
+                    width: 1920,
+                    height: 1080,
                 };
                 media.push(img);
             }
             layer++;
         }
         
-        return media;
+        const frames = await resizeFrames(media, 1920, 1080)
+        
+        const resized_media = [];
+        const updatedFiles = [...filesID || []];
+        for (const f of zipArrays(frames, media)) {
+          const fileId = crypto.randomUUID();
+          await storeFile(f[0], fileId);
+          updatedFiles.push(fileId);
+          
+          const url = URL.createObjectURL(f[0]);
+          
+          resized_media.push({...f[1], fileId: fileId, src: url});
+        }
+        
+        dispatch(setFilesID(updatedFiles));
+        
+        return resized_media;
     };
     
 
@@ -89,7 +113,7 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
                 filters.push(`color=c=black:size=1920x1080:d=${totalDuration.toFixed(3)}[base]`);
                 // Sort videos by zIndex ascending (lowest drawn first)
                 //const sortedMediaFiles = [...mediaFiles].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-                const animationFiles = getAnimationFiles();
+                const animationFiles = await getAnimationFiles();
                 const sortedMediaFiles = [...animationFiles].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
                 console.log(sortedMediaFiles);
 
@@ -330,15 +354,6 @@ export default function FfmpegRender({ loadFunction, loadFfmpeg, ffmpeg, logMess
                                             width={18}
                                         />
                                         <span className="ml-2">Save Video</span>
-                                    </a>
-                                    <a
-                                        href="https://github.com/sponsors/mohyware"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={`inline-flex items-center p-3 bg-pink-600 hover:bg-pink-500 rounded-lg text-gray-900 font-bold transition-all transform`}
-                                    >
-                                        <Heart size={20} className="mr-2" />
-                                        Sponsor on Github
                                     </a>
                                 </div>
                             </div>

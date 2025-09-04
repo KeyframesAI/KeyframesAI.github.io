@@ -312,6 +312,39 @@ export const interpolateFrames = async (frame1: MediaFile, frame2: MediaFile, ti
 };
 
 
+export const resizeFrames = async (images: MediaFile[], width: number, height: number) => {
 
+  console.log("resizeFrames");
+  const hgToken = (process.env.NEXT_PUBLIC_HG_TOKEN as `hf_${string}`);
+  //console.log(hgToken);
+  
+  
+  const app = await Client.connect(hg_space, { hf_token: hgToken, events: ["status", "data"]}); //await Client.duplicate("acmyu/KeyframesAI", { hf_token: hgToken });
+  
+  
+  const imgs: any[] = [];
+  for (const fr of images) {
+    const img = await getFile(fr.id);
+    imgs.push({"image":handle_file(img),"caption":""});
+  }
+  //console.log(img1, img2);
+  
+  const result = await app.predict("/resize_images", { 		
+      images: imgs,
+      width: width,
+      height: height,
+  });
 
+  console.log("done resizeFrames");
+  console.log(result);
 
+  const data = (result.data as any)
+  
+  const frames = await getFrames(data[0]);
+
+  //console.log(frames);
+  //console.log(thumbnails)
+
+  return frames;
+
+}

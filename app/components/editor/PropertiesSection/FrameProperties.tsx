@@ -189,23 +189,54 @@ export default function FrameProperties() {
         return newFrame;
     };
     
-    const onDuplicateFrame = async () => {
+    
+    const onReverseFrames = async () => {
+        dispatch(setHistory(getUpdatedHistory(projectState)));
+        
+        const start = Number(applyFrom);
+        const end = Number(applyTo);
+        
+        const updatedFrames = [...animation.frames];
+        for (var i = start; i<=end; i++) {
+          const j = end - (i-start);
+          console.log(i, j);
+          updatedFrames[i] = {...updatedFrames[i], order: animation.frames[j].order};
+        }
+        updatedFrames.sort((a, b) => a.order - b.order);
+        
+        dispatch(setAnimations(animations.map(ani =>
+            ani.id === animation.id ? { ...ani, frames: updatedFrames } : ani
+        )));
+    };
+    
+    
+    const onDuplicateFrames = async () => {
         //onUpdateFrame2();
         //console.log(animations);
         
         dispatch(setHistory(getUpdatedHistory(projectState)));
         
-        const newFrame: Frame = await createDuplicateFrame(frame);
+        const start = Number(applyFrom);
+        const end = Number(applyTo);
         
-        const updatedFrames = [...animation.frames];
-        if (newFrame) {
-            updatedFrames.splice(activeFrameIndex+1, 0, newFrame);
+        const newFrames = [];
+        for (var i = start; i<=end; i++) {
+          const newFrame: Frame = await createDuplicateFrame(animation.frames[i]);
+          if (newFrame) {
+            newFrames.push(newFrame);
+          }
         }
         
-        //console.log(frame, newFrame);
+        const updatedFrames = [...animation.frames];
+        updatedFrames.splice(end+1, 0, ...newFrames);
         
-        for (var i = activeFrameIndex+1; i<updatedFrames.length; i++) {
-            updatedFrames[i] = {...updatedFrames[i], order: updatedFrames[i].order+1};
+        
+        console.log(end+1, updatedFrames.length);
+        
+        for (var i = end+1; i<updatedFrames.length; i++) {
+            console.log(updatedFrames[i].order, newFrames.length);
+            updatedFrames[i] = {...updatedFrames[i], order: updatedFrames[i].order + newFrames.length};
+            console.log(updatedFrames[i].order);
         }
         
         console.log(updatedFrames);
@@ -778,9 +809,95 @@ export default function FrameProperties() {
                     
                 </div>
                 
-            
                 
                 
+                {/* Duplicate Frames */}
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Duplicate Frames</h4>
+                    <div className="flex items-center space-x-4">
+                        <div style={{width: '30%'}}>
+                            <label className="block text-sm">From</label>
+                            <input
+                                type="number"
+                                value={applyFrom}
+                                min={0}
+                                onChange={(e:any) => setApplyFrom(e.target.value)}
+                                className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
+                            />
+                        </div>
+                        <div style={{width: '30%'}}>
+                            <label className="block text-sm">To</label>
+                            <input
+                                type="number"
+                                value={applyTo}
+                                min={0}
+                                max={animation.frames.length-1}
+                                onChange={(e:any) => setApplyTo(e.target.value)}
+                                className="w-full p-2 bg-darkSurfacePrimary border border-white border-opacity-10 shadow-md text-white rounded focus:outline-none focus:ring-2 focus:ring-white-500 focus:border-white-500"
+                            />
+                        </div>
+                    </div>
+                        
+                    <div className="flex items-center space-x-4">
+                        <div className="space-y-2">
+                            <label
+                                onClick={() => onDuplicateFrames()}
+                                className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                            >
+                                <Image
+                                    alt="Add Project"
+                                    className="Black"
+                                    height={24}
+                                    width={24}
+                                    src="https://www.svgrepo.com/show/521623/duplicate.svg"
+                                />
+                                <span className="text-sm"> Duplicate </span>
+                            </label>
+                        
+                            
+                        </div>
+                        
+                        
+                        <div className="space-y-2">
+                            <label
+                                onClick={() => onReverseFrames()}
+                                className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                            >
+                                <Image
+                                    alt="Add Project"
+                                    className="Black"
+                                    height={24}
+                                    width={24}
+                                    src="https://www.svgrepo.com/show/343271/reverse.svg"
+                                />
+                                <span className="text-sm"> Mirror </span>
+                            </label>
+                        
+                            
+                        </div>
+                
+                    </div>
+                </div>
+                
+                
+                {/* Duplicate Animation */}
+                <div className="space-y-2">
+                    <label
+                        onClick={() => onDuplicateAnimation()}
+                        className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
+                    >
+                        <Image
+                            alt="Add Project"
+                            className="Black"
+                            height={24}
+                            width={24}
+                            src="https://www.svgrepo.com/show/521623/duplicate.svg"
+                        />
+                        <span className="text-sm">Duplicate Layer</span>
+                    </label>
+                
+                    
+                </div>
                 
                 
                 {/* Delete Frames */}
@@ -828,44 +945,6 @@ export default function FrameProperties() {
                         </div>
                 
                     </div>
-                </div>
-                
-                {/* Duplicate Frame */}
-                <div className="space-y-2">
-                    <label
-                        onClick={() => onDuplicateFrame()}
-                        className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
-                    >
-                        <Image
-                            alt="Add Project"
-                            className="Black"
-                            height={24}
-                            width={24}
-                            src="https://www.svgrepo.com/show/521623/duplicate.svg"
-                        />
-                        <span className="text-sm">Duplicate Frame</span>
-                    </label>
-                
-                    
-                </div>
-                
-                {/* Duplicate Animation */}
-                <div className="space-y-2">
-                    <label
-                        onClick={() => onDuplicateAnimation()}
-                        className="cursor-pointer rounded-full bg-white border border-solid border-transparent transition-colors flex flex-row gap-2 items-center justify-center text-gray-800 hover:bg-[#ccc] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-auto py-2 px-2 sm:px-5 sm:w-auto"
-                    >
-                        <Image
-                            alt="Add Project"
-                            className="Black"
-                            height={24}
-                            width={24}
-                            src="https://www.svgrepo.com/show/521623/duplicate.svg"
-                        />
-                        <span className="text-sm">Duplicate Layer</span>
-                    </label>
-                
-                    
                 </div>
                 
                 
