@@ -15,7 +15,7 @@ var request = require('request');
 */
 
 
-const hg_space = "acmyu/KeyframesAI2"
+const hg_space = "acmyu/KeyframesAI"
 const train_steps = 100
 
 async function getFileFromUrl(url: string, name: string, defaultType:string = 'image/png'){
